@@ -403,7 +403,7 @@ function buildPrintPayloadFromPNG(pngBuffer) {
 
 // ================== ZALO VIP CARD AUTO SEND (ANTI-SPAM CACHE 30 NGÀY) ==================
 const VIP_CACHE_FILE = path.join(__dirname, "sent_vip_cache.json");
-const VIP_COOLDOWN_DAYS = 30;
+const VIP_COOLDOWN_DAYS = 15;
 
 
 function cleanCustomerName(name) {
@@ -455,7 +455,7 @@ async function triggerSendVipCard(phone, customerName) {
     }
 
     if (!shouldSendVipCard(cleanPhone)) {
-      console.log(`[VIP-AUTO] Bỏ qua gửi Thẻ VIP cho ${cleanPhone}: Đã gửi trong vòng ${VIP_COOLDOWN_DAYS} ngày.`);
+      console.log(`[VIP-AUTO] Bỏ qua gửi Thẻ Thành Viên cho ${cleanPhone}: Đã gửi trong vòng ${VIP_COOLDOWN_DAYS} ngày.`);
       return;
     }
 
