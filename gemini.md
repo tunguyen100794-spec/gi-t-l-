@@ -21,3 +21,10 @@ Mỗi Implementation Plan phải bao gồm:
 3. **Chi tiết các bước thực hiện:** Từng bước kỹ thuật, tệp tin cần tạo/sửa đổi.
 4. **Cơ chế an toàn & Khả năng tương thích:** Đảm bảo không làm ảnh hưởng đến file Google Sheet và phần mềm AppSheet đang hoạt động tại tiệm.
 5. **Kế hoạch kiểm thử & nghiệm thu:** Cách kiểm tra tính đúng đắn trước khi bàn giao.
+
+## 4. Tự động sao lưu và đẩy lên GitHub (Automated Git Commit & Push)
+- Sau khi hoàn thành bất kỳ yêu cầu chỉnh sửa, sửa lỗi hoặc thêm tính năng nào được người dùng phê duyệt, Assistant **BẮT BUỘC** phải tự động chạy:
+  1. `git add .`
+  2. `git commit -m "<Mô tả ngắn gọn, rõ ràng những gì đã làm>"`
+  3. `git push`
+- Toàn bộ quá trình đồng bộ mã nguồn lên GitHub phải diễn ra tự động 100%, không yêu cầu người dùng phải gõ lệnh hay thao tác thủ công.
