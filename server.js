@@ -466,14 +466,14 @@ async function triggerSendVipCard(phone, customerName) {
     const greetingLine = cleanName ? `Kính chào Quý khách ${cleanName.toUpperCase()}` : "Kính chào Quý khách";
 
     const cardCaption = 
-      `✨ GIẶT SẤY GOLD LAUNDRY ✨\n` +
+      `🧺 GIẶT SẤY GOLD LAUNDRY\n` +
       `${greetingLine}\n\n` +
-      `Cảm ơn Quý khách đã gửi đồ hôm nay.\n` +
-      `Cửa hàng gửi tặng Quý khách THẺ THÀNH VIÊN để tích điểm & theo dõi đơn:\n\n` +
+      `Cảm ơn Quý khách đã sử dụng dịch vụ giặt sấy Gold Laundry.\n` +
+      `Cửa hàng gửi tặng Quý khách THẺ THÀNH VIÊN để tích điểm & theo dõi đơn giặt: 💳\n\n` +
       `👉 Mở Thẻ Thành Viên tại:\n` +
       `${shortCardUrl}\n\n` +
-      `📞 Hotline: 0777779711\n` +
-      `Chúc Quý khách một ngày tốt lành! 🌸`;
+      `Hotline: 0777779711\n` +
+      `Kính chúc Quý khách một ngày tốt lành! 🌷`;
 
     console.log(`[VIP-AUTO] Đang gọi Zalo Gateway gửi Thẻ VIP tới ${cleanPhone}...`);
     const nodeFetch = require("node-fetch");
