@@ -405,6 +405,17 @@ function buildPrintPayloadFromPNG(pngBuffer) {
 const VIP_CACHE_FILE = path.join(__dirname, "sent_vip_cache.json");
 const VIP_COOLDOWN_DAYS = 30;
 
+
+function cleanCustomerName(name) {
+  if (!name) return "";
+  let s = String(name).trim();
+  s = s.replace(/(\+?84|0)?[0-9]{9,10}/g, "");
+  s = s.replace(/[\*\(\)]+/g, " ");
+  s = s.replace(/\s+[0-9]+$/g, "");
+  s = s.replace(/\s+/g, " ").trim();
+  return s;
+}
+
 function shouldSendVipCard(phone) {
   try {
     if (!fs.existsSync(VIP_CACHE_FILE)) return true;
@@ -448,16 +459,16 @@ async function triggerSendVipCard(phone, customerName) {
       return;
     }
 
-    const displayName = (customerName || "").trim();
-    const greeting = displayName ? `KÍNH CHÀO ${displayName.toUpperCase()}!` : "KÍNH CHÀO QUÝ KHÁCH!";
-    const cardUrl = `https://giatsayquynhon.vn/the/?phone=${cleanPhone}`;
+    const cleanName = cleanCustomerName(customerName);
+    const greeting = cleanName ? `KÍNH CHÀO ${cleanName.toUpperCase()}!` : "KÍNH CHÀO QUÝ KHÁCH!";
+    const shortCardUrl = "giatsayquynhon.vn/the";
 
     const cardCaption = 
       `✨ GIẶT SẤY GOLD LAUNDRY ${greeting} ✨\n` +
-      `Cảm ơn Quý khách đã tin tưởng gửi đồ tại tiệm hôm nay!\n` +
-      `Tiệm thân gửi tặng Quý khách THẺ THÀNH VIÊN VIP ĐIỆN TỬ để tích điểm và theo dõi trạng thái đơn giặt.\n` +
-      `👉 Nhấn vào đây để đăng ký thẻ thành viên: ${cardUrl}\n` +
-      `Hotline hỗ trợ: 0777 77 97 11. Kính chúc Quý khách một ngày tốt lành!`;
+      `Cảm ơn Quý khách đã tin tưởng gửi đồ tại cửa hàng hôm nay!\n` +
+      `Cửa hàng thân gửi tặng Quý khách THẺ THÀNH VIÊN VIP ĐIỆN TỬ để tích điểm và theo dõi trạng thái đơn giặt.\n` +
+      `👉 Nhấn vào đây để đăng ký thẻ thành viên: ${shortCardUrl}\n` +
+      `Hotline hỗ trợ: 0777779711. Kính chúc Quý khách một ngày tốt lành!`;
 
     console.log(`[VIP-AUTO] Đang gọi Zalo Gateway gửi Thẻ VIP tới ${cleanPhone}...`);
     const nodeFetch = require("node-fetch");

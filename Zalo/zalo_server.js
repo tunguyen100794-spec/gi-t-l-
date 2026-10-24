@@ -9,6 +9,17 @@ const os = require("os");
 const QRCode = require("qrcode");
 const { execSync } = require("child_process");
 
+
+function cleanCustomerName(name) {
+  if (!name) return "";
+  let s = String(name).trim();
+  s = s.replace(/(\+?84|0)?[0-9]{9,10}/g, "");
+  s = s.replace(/[\*\(\)]+/g, " ");
+  s = s.replace(/\s+[0-9]+$/g, "");
+  s = s.replace(/\s+/g, " ").trim();
+  return s;
+}
+
 function removeVietnameseTones(str) {
   if (!str) return "";
   str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
@@ -193,12 +204,17 @@ async function handleSendVipCard({ phone, message }) {
   console.log(`[BOT-VIP] Tìm thấy khách: ${targetName} (UID: ${targetUid}). Bắt đầu ghép Thẻ VIP...`);
 
   const cardUrl = `https://giatsayquynhon.vn/the/?phone=${cleanPhone}`;
+  const cleanName = cleanCustomerName(targetName);
+  const greeting = cleanName ? `KÍNH CHÀO ${cleanName.toUpperCase()}!` : "KÍNH CHÀO QUÝ KHÁCH!";
+  const shortCardUrl = "giatsayquynhon.vn/the";
+
   const cardCaption =
     message ||
-    `✨ GIẶT SẤY GOLD LAUNDRY KÍNH CHÀO ${targetName.toUpperCase()}! ✨\n` +
-      `Tiệm thân gửi Quý khách THẺ THÀNH VIÊN VIP ĐIỆN TỬ với rất nhiều đặc quyền hấp dẫn.\n` +
-      `👉 Chạm vào đây để mở Thẻ VIP ngay: ${cardUrl}\n` +
-      `Hotline hỗ trợ: 0777 77 97 11. Kính chúc Quý khách một ngày tốt lành!`;
+    `✨ GIẶT SẤY GOLD LAUNDRY ${greeting} ✨\n` +
+      `Cảm ơn Quý khách đã tin tưởng gửi đồ tại cửa hàng hôm nay!\n` +
+      `Cửa hàng thân gửi tặng Quý khách THẺ THÀNH VIÊN VIP ĐIỆN TỬ để tích điểm và theo dõi trạng thái đơn giặt.\n` +
+      `👉 Nhấn vào đây để đăng ký thẻ thành viên: ${shortCardUrl}\n` +
+      `Hotline hỗ trợ: 0777779711. Kính chúc Quý khách một ngày tốt lành!`;
 
   const tempQrPath = path.join(os.tmpdir(), `temp_qr_${cleanPhone}_${Date.now()}.png`);
   const finalCardPath = path.join(os.tmpdir(), `card_${cleanPhone}_${Date.now()}.png`);
