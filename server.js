@@ -463,13 +463,14 @@ async function triggerSendVipCard(phone, customerName) {
     const greeting = cleanName ? `KÍNH CHÀO ${cleanName.toUpperCase()}!` : "KÍNH CHÀO QUÝ KHÁCH!";
     const shortCardUrl = "giatsayquynhon.vn/the";
 
-    const greetingLine = cleanName ? `Kính chào Quý khách ${cleanName.toUpperCase()}!` : "Kính chào Quý khách!";
+    const greetingLine = cleanName ? `Kính chào Quý khách ${cleanName.toUpperCase()}` : "Kính chào Quý khách";
 
     const cardCaption = 
       `✨ GIẶT SẤY GOLD LAUNDRY ✨\n` +
       `${greetingLine}\n\n` +
-      `Cảm ơn Quý khách đã gửi đồ hôm nay. Cửa hàng thân gửi tặng Quý khách THẺ THÀNH VIÊN để tích điểm & theo dõi đơn giặt:\n\n` +
-      `👉 Mở Thẻ tại:\n` +
+      `Cảm ơn Quý khách đã gửi đồ hôm nay.\n` +
+      `Cửa hàng gửi tặng Quý khách THẺ THÀNH VIÊN để tích điểm & theo dõi đơn:\n\n` +
+      `👉 Mở Thẻ Thành Viên tại:\n` +
       `${shortCardUrl}\n\n` +
       `📞 Hotline: 0777779711\n` +
       `Chúc Quý khách một ngày tốt lành! 🌸`;
