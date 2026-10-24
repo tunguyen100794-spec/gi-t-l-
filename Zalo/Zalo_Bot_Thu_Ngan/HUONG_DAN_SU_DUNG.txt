@@ -1,0 +1,29 @@
+========================================================================
+✨ HƯỚNG DẪN CÀI ĐẶT VÀ SỬ DỤNG ZALO GATEWAY THU NGÂN - GOLD LAUNDRY ✨
+========================================================================
+
+Hotline Zalo: 0986 63 93 23
+
+BƯỚC 1: GIẢI NÉN
+- Nhấp chuột phải vào file Zalo_Bot_Thu_Ngan.zip -> Chọn "Extract All..." (hoặc "Giải nén ở đây")
+- Đặt thư mục này ở màn hình Desktop máy thu ngân.
+
+BƯỚC 2: KHỞI ĐỘNG VÀ QUÉT MÃ QR (CHỈ LÀM 1 LẦN DUY NHẤT)
+- Nhấp đúp vào file "1_Chay_Bot_Zalo.bat".
+- Trình duyệt sẽ tự động mở trang: http://localhost:5050
+- Màn hình sẽ hiện mã QR đăng nhập Zalo.
+- Dùng điện thoại có Zalo hotline (0986 63 93 23) -> Bấm biểu tượng Quét mã QR -> Hướng vào màn hình -> Bấm "Đăng nhập".
+- Ngay lập tức màn hình sẽ báo màu xanh: "ĐÃ SẴN SÀNG HOẠT ĐỘNG".
+- Lần sau mở máy sẽ KHÔNG CẦN quét lại nữa, hệ thống tự động ghi nhớ phiên đăng nhập.
+
+BƯỚC 3: CÀI TỰ ĐỘNG CHẠY CÙNG MÁY TÍNH
+- Nhấp đúp vào file "2_Cai_Dat_Tu_Dong_Chay_Cung_May_Tinh.bat".
+- Sau này, mỗi khi thu ngân mở máy tính vào đầu ngày, Bot sẽ tự động chạy ngầm.
+
+BƯỚC 4: SỬ DỤNG TRÊN WEB QUẢN LÝ
+- Mở trang quản lý https://giatsayquynhon.vn/the/quanly.html
+- Tại danh sách khách hàng, chỉ cần bấm nút "💬 Mời Zalo".
+- Tin nhắn thẻ VIP kèm link tra cứu của khách sẽ TỰ ĐỘNG BAY THẲNG vào Zalo khách hàng 100% trong 1 cú nhấp chuột (không cần gõ hay dán gì thêm).
+
+Chúc tiệm Giặt Sấy Gold Laundry buôn may bán đắt!
+========================================================================

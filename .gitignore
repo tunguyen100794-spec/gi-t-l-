@@ -1,0 +1,41 @@
+# ========================================================
+# SHOP_APP - GIT IGNORE (BAO VE THONG TIN BAO MAT & FILE NANG)
+# ========================================================
+
+# 1. Thư mục phụ thuộc (Dependencies)
+node_modules/
+package-lock.json
+
+# 2. File định danh và phiên đăng nhập Zalo (CỰC KỲ QUAN TRỌNG - BẢO MẬT)
+zalo_credentials.json
+session.json
+zalo_n8n.json
+*.session
+*.credentials
+
+# 3. Ảnh tạm và mã QR đăng nhập
+qr.png
+temp_qr*.png
+card_*.png
+test_qr*.png
+test_vip_out.png
+
+# 4. Nhật ký và Bộ nhớ tạm (Logs & Cache)
+logs/
+*.log
+sent_vip_cache.json
+.pm2/
+.npm/
+
+# 5. File nén dung lượng lớn (Archives)
+*.rar
+*.zip
+*.7z
+*.tar.gz
+
+# 6. File hệ điều hành & Editor
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/

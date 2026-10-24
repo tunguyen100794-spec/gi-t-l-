@@ -1,0 +1,44 @@
+Cách inject OKX
+Vào OKX P2P
+Bấm F12, vào tab source, chọn page, chọn OKX.COM (Dòng 2). Chuột phải tìm "Search in all files". Tìm key word bên dưới.
+x-client-signature
+
+Nó sẽ hiện kết quả ở dòng dưới cùng. Bấm vào đó, nó sẽ mở file ont.js
+Bấm chuột phải, chọn "Override Content". Sau đó chọn folder để lưu lại.
+Xong thì xuống dưới cùng xóa dòng dưới cùng. Xong tìm keyword "/v3/users/security/heartbeat" hoặc là "getWithCache". 
+Đi tới dòng gần cuối thêm dòng "window.OKXRequest = no".
+
+Ví dụ 1
+        const no = c(c({}, ro), {}, {
+            checkJwtSignature: function() {
+                ro.post("/v3/users/security/heartbeat", {
+                    timestamp: (new Date).getTime()
+                })
+            }
+        })
+        window.OKXRequest = no
+    }
+    )(),
+    (window.utils = window.utils || {}).ont = n.default
+}
+)();
+
+Ví dụ 2
+         W.init({
+            project: "ont"
+        }),
+        no.crypto.upid.setUPid(),
+        Me.isApp ? Kt() : (function() {
+            var e = Tt();
+            Rt(e)
+        }(),
+        Pt() && no.post("/v3/users/security/heartbeat", {
+            timestamp: (new Date).getTime()
+        }));
+        const oo = no
+        window.OKXRequest = no
+    }
+    )(),
+    (window.utils = window.utils || {}).ont = n.default
+	
+	

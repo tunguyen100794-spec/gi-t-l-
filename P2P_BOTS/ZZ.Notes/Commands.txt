@@ -1,0 +1,26 @@
+node p2p-price-checker/src/bot.js
+node binance-order-bot/src/bot.js
+node bybit-ad-updater/p2p_v2.js
+
+
+
+pm2 start auto-buy-bot/src/bot.js --name "auto-buy-bot"
+pm2 start bybit-ad-updater/p2p_v2.js --name "bybit-ad-updater"
+
+Vào folder gate-p2p-bot rồi chạy
+pm2 start bot.js --name "gate-ad-update"
+
+
+Vao folder coinmarketcap roi chay
+pm2 start src/funding.js --name "funding"
+
+Vao folder p2p-USD-check-bot
+pm2 start src/bot.js --name "p2p-USD-check"
+
+Vao folder p2p-price-checker
+pm2 start src/bot.js --name "p2p-price-checker"
+
+
+pm2 start src/bot.js --name "binance_autobuy"
+
+p2p-USD-check-bot

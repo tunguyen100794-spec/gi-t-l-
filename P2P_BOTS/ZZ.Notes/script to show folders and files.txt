@@ -1,0 +1,5 @@
+Open powersell and go to the parent folder.
+
+ Get-ChildItem -Recurse -Force |
+>>     Where-Object { $_.FullName -notmatch 'node_modules' } |
+>>     ForEach-Object { $_.FullName }
