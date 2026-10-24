@@ -214,12 +214,14 @@ async function handleSendVipCard({ phone, message }) {
     message ||
     `🧺 GIẶT SẤY GOLD LAUNDRY\n` +
       `${greetingLine}\n\n` +
-      `Cảm ơn Quý khách đã sử dụng dịch vụ giặt sấy Gold Laundry.\n` +
-      `Cửa hàng gửi tặng Quý khách THẺ THÀNH VIÊN để tích điểm & theo dõi đơn giặt: 💳\n\n` +
+      `Cảm ơn Quý khách đã sử dụng\n` +
+      `dịch vụ giặt sấy Gold Laundry.\n\n` +
+      `Cửa hàng gửi tặng Quý khách\n` +
+      `THẺ THÀNH VIÊN tích điểm: 💳\n\n` +
       `👉 Mở Thẻ Thành Viên tại:\n` +
       `${shortCardUrl}\n\n` +
       `Hotline: 0777779711\n` +
-      `Kính chúc Quý khách một ngày tốt lành! 🌷`;
+      `Kính chúc Quý khách tốt lành! 🌷`;
 
   const tempQrPath = path.join(os.tmpdir(), `temp_qr_${cleanPhone}_${Date.now()}.png`);
   const finalCardPath = path.join(os.tmpdir(), `card_${cleanPhone}_${Date.now()}.png`);
