@@ -208,13 +208,18 @@ async function handleSendVipCard({ phone, message }) {
   const greeting = cleanName ? `KÍNH CHÀO ${cleanName.toUpperCase()}!` : "KÍNH CHÀO QUÝ KHÁCH!";
   const shortCardUrl = "giatsayquynhon.vn/the";
 
+  const greetingLine = cleanName ? `Kính chào Quý khách ${cleanName.toUpperCase()}!` : "Kính chào Quý khách!";
+
   const cardCaption =
     message ||
-    `✨ GIẶT SẤY GOLD LAUNDRY ${greeting} ✨\n` +
-      `Cảm ơn Quý khách đã tin tưởng gửi đồ tại cửa hàng hôm nay!\n` +
-      `Cửa hàng thân gửi tặng Quý khách THẺ THÀNH VIÊN VIP ĐIỆN TỬ để tích điểm và theo dõi trạng thái đơn giặt.\n` +
-      `👉 Nhấn vào đây để đăng ký thẻ thành viên: ${shortCardUrl}\n` +
-      `Hotline hỗ trợ: 0777779711. Kính chúc Quý khách một ngày tốt lành!`;
+    `✨ GIẶT SẤY GOLD LAUNDRY ✨\n` +
+      `${greetingLine}\n\n` +
+      `Cảm ơn Quý khách đã tin tưởng gửi đồ tại cửa hàng hôm nay.\n\n` +
+      `Cửa hàng thân gửi tặng Quý khách THẺ THÀNH VIÊN VIP ĐIỆN TỬ để tích điểm và theo dõi tiến độ giặt sấy.\n\n` +
+      `👉 Đăng ký & mở Thẻ VIP tại:\n` +
+      `${shortCardUrl}\n\n` +
+      `📞 Hotline hỗ trợ: 0777779711\n` +
+      `Kính chúc Quý khách một ngày tốt lành! 🌸`;
 
   const tempQrPath = path.join(os.tmpdir(), `temp_qr_${cleanPhone}_${Date.now()}.png`);
   const finalCardPath = path.join(os.tmpdir(), `card_${cleanPhone}_${Date.now()}.png`);
