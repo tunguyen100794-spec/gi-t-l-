@@ -468,11 +468,14 @@ async function triggerSendVipCard(phone, customerName) {
     const cardCaption = 
       `🧺 GIẶT SẤY GOLD LAUNDRY\n` +
       `${greetingLine}\n\n` +
-      `Cảm ơn Quý khách đã sử dụng dịch vụ giặt sấy Gold Laundry.\n` +
-      `Cửa hàng gửi tặng Quý khách THẺ THÀNH VIÊN: 💳\n\n` +
-      `👉 Mở Thẻ Thành Viên tại:\n` +
+      `Cảm ơn Quý khách đã tin chọn dịch vụ giặt sấy Gold Laundry!\n\n` +
+      `Cửa hàng trân trọng kính mời Quý khách ĐĂNG KÝ THẺ THÀNH VIÊN để nhận ngay các đặc quyền: 💳\n` +
+      `• Tích lũy điểm thưởng đổi lượt giặt & quà tặng (Giặt 7 lần tặng 1 lần)\n` +
+      `• Theo dõi tiến độ đơn giặt trực tuyến tiện lợi\n` +
+      `• Nhận ưu đãi giảm giá độc quyền cho thành viên\n\n` +
+      `👉 Đăng ký mở thẻ hoàn toàn miễn phí tại:\n` +
       `${shortCardUrl}\n\n` +
-      `Hotline: 0777779711\n` +
+      `Hotline hỗ trợ: 0777779711\n` +
       `Kính chúc Quý khách một ngày tốt lành! 🌷`;
 
     console.log(`[VIP-AUTO] Đang gọi Zalo Gateway gửi Thẻ VIP tới ${cleanPhone}...`);
