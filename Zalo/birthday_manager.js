@@ -240,8 +240,6 @@ function buildBirthdayMessage(member, discountPercent = 50, targetDate = new Dat
     `• Thời hạn áp dụng: Đến hết ngày ${endOfMonthFormatted} (Trong suốt tháng sinh nhật)\n` +
     `• Điều kiện: Áp dụng 01 lần duy nhất trong tháng sinh nhật\n\n` +
     `Quý khách chỉ cần đọc SĐT hoặc đưa tin nhắn này cho thu ngân khi gửi đồ để được giảm giá ${discountPercent}% trực tiếp trên hóa đơn nhé!\n\n` +
-    `👉 Mở Thẻ VIP & xem điểm thưởng tại:\n` +
-    `giatsayquynhon.vn/the/?phone=${phone}\n\n` +
     `Hotline hỗ trợ: 0777 77 97 11\n` +
     `Kính chúc Quý khách một ngày sinh nhật thật ấm áp và ý nghĩa! 💖`;
 }

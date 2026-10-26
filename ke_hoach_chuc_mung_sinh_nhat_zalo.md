@@ -107,9 +107,6 @@ Gold Laundry (282 Diên Hồng) thân gửi tới Quý khách lời chúc tuổi
 
 Quý khách chỉ cần đọc SĐT hoặc đưa tin nhắn này cho thu ngân khi gửi đồ để được giảm giá 50% trực tiếp trên hóa đơn nhé!
 
-👉 Xem chi tiết thẻ thành viên & tích điểm tại:
-giatsayquynhon.vn/the
-
 Hotline hỗ trợ: 0777 77 97 11
 Kính chúc Quý khách một ngày sinh nhật thật ấm áp và ý nghĩa! 💖
 ```
