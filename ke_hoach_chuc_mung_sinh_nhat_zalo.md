@@ -97,12 +97,13 @@ Mẫu tin nhắn được tinh chỉnh bố cục chuyên nghiệp, ngắn gọn
 
 Gold Laundry (282 Diên Hồng) thân gửi tới Quý khách lời chúc tuổi mới luôn ngập tràn niềm vui, nhiều sức khỏe, may mắn và hạnh phúc! 🌷
 
-🎁 MÓN QUÀ SINH NHẬT ĐẶC QUYỀN DÀNH TẶNG BẠN HÔM NAY:
-👉 VOUCHER GIẢM 50% TOÀN BỘ ĐƠN GIẶT TRONG NGÀY HÔM NAY!
-(Áp dụng không giới hạn cho mọi dịch vụ: giặt sấy, sấy gấp, giặt chăn ga mền khi ghé tiệm hoặc đặt giao nhận)
+🎁 MÓN QUÀ SINH NHẬT ĐẶC QUYỀN DÀNH TẶNG BẠN:
+👉 VOUCHER GIẢM 50% ĐƠN HÀNG (DÙNG 1 LẦN DUY NHẤT)!
+(Áp dụng giảm 50% cho 01 đơn hàng bất kỳ: giặt sấy, sấy gấp, giặt chăn ga mền khi ghé tiệm hoặc đặt giao nhận)
 
-Mã ưu đãi: SINHNHAT50-[SĐT]
-Thời hạn áp dụng: Duy nhất hôm nay ([NGÀY_HÔM_NAY])
+• Mã ưu đãi: SINHNHAT50-[SĐT]
+• Thời hạn áp dụng: Đến hết ngày [NGÀY_CUỐI_THÁNG] (Trong suốt tháng sinh nhật)
+• Điều kiện: Áp dụng 01 lần duy nhất trong tháng sinh nhật
 
 Quý khách chỉ cần đọc SĐT hoặc đưa tin nhắn này cho thu ngân khi gửi đồ để được giảm giá 50% trực tiếp trên hóa đơn nhé!
 
@@ -114,7 +115,7 @@ Kính chúc Quý khách một ngày sinh nhật thật ấm áp và ý nghĩa! �
 ```
 
 > [!IMPORTANT]
-> * **Chính sách ưu đãi**: Áp dụng giảm giá **50% toàn bộ đơn hàng** trong ngày sinh nhật không giới hạn giá trị đơn hàng hay hạng thành viên theo đúng yêu cầu của bạn.
+> * **Chính sách ưu đãi**: Áp dụng giảm giá **50% cho 01 đơn hàng** trong suốt tháng sinh nhật của khách hàng (đến hết ngày cuối cùng của tháng sinh nhật), sử dụng **01 lần duy nhất** theo đúng yêu cầu điều chỉnh của bạn.
 > * **Báo cáo Telegram**: Thông báo đầy đủ danh sách khách sinh nhật hôm nay kèm số lượng tin nhắn đã gửi thành công.
 
 #### Bước 5: Tích hợp Bộ Lập Lịch Tự Động (Daily Cron) & Báo cáo Telegram

@@ -218,9 +218,13 @@ async function getBirthdaysToday(targetDate = new Date()) {
 // Tạo nội dung tin nhắn Zalo chúc mừng sinh nhật
 function buildBirthdayMessage(member, discountPercent = 50, targetDate = new Date()) {
   const vnTarget = new Date(targetDate.getTime() + (7 * 60 + targetDate.getTimezoneOffset()) * 60000);
-  const dayStr = String(vnTarget.getDate()).padStart(2, "0");
-  const monthStr = String(vnTarget.getMonth() + 1).padStart(2, "0");
-  const todayFormatted = `${dayStr}/${monthStr}/${vnTarget.getFullYear()}`;
+  const targetYear = vnTarget.getFullYear();
+  const targetMonth = vnTarget.getMonth() + 1;
+  const monthStr = String(targetMonth).padStart(2, "0");
+  
+  // Tính ngày cuối cùng của tháng sinh nhật (ví dụ tháng 10 -> ngày 31, tháng 2 -> 28 hoặc 29)
+  const lastDay = new Date(targetYear, targetMonth, 0).getDate();
+  const endOfMonthFormatted = `${lastDay}/${monthStr}/${targetYear}`;
 
   const cleanName = member.clean_name || cleanCustomerName(member.customer_name) || "QUÝ KHÁCH";
   const upperName = cleanName.toUpperCase();
@@ -229,11 +233,12 @@ function buildBirthdayMessage(member, discountPercent = 50, targetDate = new Dat
 
   return `🎂 GOLD LAUNDRY KÍNH CHÚC MỪNG SINH NHẬT ${upperName}! 🎉\n\n` +
     `Gold Laundry (282 Diên Hồng) thân gửi tới Quý khách lời chúc tuổi mới luôn ngập tràn niềm vui, nhiều sức khỏe, may mắn và luôn rạng ngời với những bộ trang phục tinh tươm nhất! 🌷\n\n` +
-    `🎁 MÓN QUÀ SINH NHẬT ĐẶC QUYỀN DÀNH TẶNG BẠN HÔM NAY:\n` +
-    `👉 VOUCHER GIẢM ${discountPercent}% TOÀN BỘ ĐƠN GIẶT TRONG NGÀY HÔM NAY!\n` +
-    `(Áp dụng không giới hạn cho mọi dịch vụ: giặt sấy, sấy gấp, giặt chăn ga mền khi ghé tiệm hoặc đặt giao nhận)\n\n` +
+    `🎁 MÓN QUÀ SINH NHẬT ĐẶC QUYỀN DÀNH TẶNG BẠN:\n` +
+    `👉 VOUCHER GIẢM ${discountPercent}% ĐƠN HÀNG (DÙNG 1 LẦN DUY NHẤT)!\n` +
+    `(Áp dụng giảm ${discountPercent}% cho 01 đơn giặt bất kỳ: giặt sấy, sấy gấp, giặt chăn ga mền khi ghé tiệm hoặc đặt giao nhận)\n\n` +
     `• Mã ưu đãi: ${voucherCode}\n` +
-    `• Thời hạn áp dụng: Duy nhất hôm nay (${todayFormatted})\n\n` +
+    `• Thời hạn áp dụng: Đến hết ngày ${endOfMonthFormatted} (Trong suốt tháng sinh nhật)\n` +
+    `• Điều kiện: Áp dụng 01 lần duy nhất trong tháng sinh nhật\n\n` +
     `Quý khách chỉ cần đọc SĐT hoặc đưa tin nhắn này cho thu ngân khi gửi đồ để được giảm giá ${discountPercent}% trực tiếp trên hóa đơn nhé!\n\n` +
     `👉 Mở Thẻ VIP & xem điểm thưởng tại:\n` +
     `giatsayquynhon.vn/the/?phone=${phone}\n\n` +
