@@ -49,6 +49,11 @@ app.use(express.json({ limit: "1024kb" }));
 const ZALO_CREDENTIALS_PATH = path.join(__dirname, "zalo_credentials.json");
 const ZALO_QR_PATH = path.join(__dirname, "qr.png");
 const VIP_CARD_TEMPLATE = path.join(__dirname, "vip_card_full.png");
+const ASSETS_DIR = path.join(__dirname, "assets");
+const HEADER_MASCOT_PATH = path.join(ASSETS_DIR, "header_mascot.png");
+const BADGE_STATUS_PATH = path.join(ASSETS_DIR, "badge_status.png");
+const ICON_COINS_PATH = path.join(ASSETS_DIR, "icon_coins.png");
+const FOOTER_PATH = path.join(ASSETS_DIR, "footer.png");
 
 let zaloClient = null;
 let isZaloReady = false;
@@ -325,8 +330,23 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
     qrBase64 = `data:${mime};base64,${qrBuffer.toString("base64")}`;
   }
 
+  const headerB64 = fs.existsSync(HEADER_MASCOT_PATH)
+    ? `data:image/png;base64,${fs.readFileSync(HEADER_MASCOT_PATH).toString("base64")}`
+    : "";
+  const badgeB64 = fs.existsSync(BADGE_STATUS_PATH)
+    ? `data:image/png;base64,${fs.readFileSync(BADGE_STATUS_PATH).toString("base64")}`
+    : "";
+  const coinB64 = fs.existsSync(ICON_COINS_PATH)
+    ? `data:image/png;base64,${fs.readFileSync(ICON_COINS_PATH).toString("base64")}`
+    : "";
+  const footerB64 = fs.existsSync(FOOTER_PATH)
+    ? `data:image/png;base64,${fs.readFileSync(FOOTER_PATH).toString("base64")}`
+    : "";
+
   const { Customer_Name, Complete_Date, Bill_Amount, Point, Customer_Phone } = data;
-  const displayName = Customer_Name || Customer_Phone || "Khách hàng";
+  const cleanName = Customer_Name || Customer_Phone || "Khách hàng";
+  const phoneDisplay = Customer_Phone ? `📞 ${Customer_Phone}` : "";
+  const pointDisplay = Point ? `⭐ ${Point} điểm` : "⭐ 0 điểm";
   let rawAmount = parseInt(String(Bill_Amount || "0").replace(/[^0-9]/g, "")) || 0;
   const formattedAmount = rawAmount.toLocaleString("vi-VN");
 
@@ -334,126 +354,119 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Be Vietnam Pro','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif; background:transparent; width:560px; }
-    .card { width:560px; background:#f0f5ff; border-radius:24px; overflow:hidden; box-shadow:0 16px 48px rgba(0,30,120,0.18); }
-    .header { background:linear-gradient(160deg,#0a2d8f 0%,#1245c8 55%,#1a6fe0 100%); padding:32px 30px 0; text-align:center; position:relative; overflow:hidden; }
-    .header::before { content:''; position:absolute; top:-60px; left:50%; transform:translateX(-50%); width:460px; height:260px; background:radial-gradient(ellipse,rgba(255,255,255,0.10) 0%,transparent 70%); }
-    .hc { position:absolute; border-radius:50%; background:rgba(255,255,255,0.06); }
-    .hc1 { width:220px;height:220px;top:-80px;right:-60px; }
-    .hc2 { width:140px;height:140px;bottom:20px;left:-40px; }
-    .sparkles { position:relative;z-index:2;display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:10px; }
-    .sparkle-icon { color:#ffd740;font-size:22px; }
-    .sparkle-icon.sm { font-size:14px; }
-    .brand-name { position:relative;z-index:2;font-size:46px;font-weight:900;color:#ffffff;letter-spacing:1px;line-height:1;text-shadow:0 3px 16px rgba(0,0,0,0.2); }
-    .brand-sub { position:relative;z-index:2;font-size:13px;font-weight:400;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.75);margin-top:8px;margin-bottom:20px; }
-    .wave { position:relative;z-index:2;line-height:0;margin-top:4px; }
-    .wave svg { display:block;width:100%; }
-    .status-bar { background:#f0f5ff;padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:14px; }
-    .status-line { flex:1;height:2px;background:linear-gradient(90deg,transparent,#1245c8 80%);border-radius:2px; }
-    .status-line.right { background:linear-gradient(90deg,#1245c8 20%,transparent); }
-    .status-diamond { width:9px;height:9px;border-radius:2px;background:#1245c8;transform:rotate(45deg);flex-shrink:0; }
-    .status-text { font-size:27px;font-weight:900;color:#1245c8;text-transform:uppercase;letter-spacing:1px;white-space:nowrap; }
-    .body { padding:10px 16px 18px;display:flex;flex-direction:column;gap:10px; }
-    .wcard { background:white;border-radius:16px;border:1.5px solid #e0e8f8;padding:14px 18px;box-shadow:0 2px 10px rgba(0,40,160,0.05); }
-    .cust-row { display:flex;align-items:center;gap:14px; }
-    .cust-avatar { width:50px;height:50px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#1245c8,#2d8ef5);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(18,69,200,0.3); }
-    .cust-name { font-size:20px;font-weight:700;color:#0d1b3e;line-height:1.3; }
-    .cust-phone { font-size:14px;color:#6b7db3;margin-top:4px;display:flex;align-items:center;gap:5px; }
-    .info-row { display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #edf2fb; }
+    body { font-family:'Be Vietnam Pro','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif; background:transparent; width:550px; }
+    .card { width:550px; background:#f0f5ff; border-radius:24px; overflow:hidden; box-shadow:0 14px 44px rgba(0,35,130,0.18); border:1.5px solid #d4e3fc; }
+    
+    .header-img { width:100%; height:245px; object-fit:cover; display:block; }
+    
+    .status-wrap { text-align:center; margin-top:4px; margin-bottom:2px; padding:0 14px; }
+    .status-img { width:100%; max-width:490px; display:block; margin:0 auto; }
+    
+    .body { padding:4px 14px 10px; display:flex; flex-direction:column; gap:6px; }
+    
+    .wcard { background:white; border-radius:14px; border:1.5px solid #e0e8f8; padding:8px 14px; box-shadow:0 2px 8px rgba(0,40,160,0.04); }
+    
+    .cust-row { display:flex; align-items:center; gap:10px; }
+    .cust-avatar { width:40px; height:40px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#0d5bd7,#258cfb); display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(13,91,215,0.3); }
+    .cust-info { display:flex; align-items:center; gap:10px; font-size:15px; font-weight:700; color:#0d1b3e; flex-wrap:wrap; }
+    .cust-name { font-size:18px; font-weight:800; color:#0d1b3e; }
+    .cust-phone { color:#1e293b; font-size:14.5px; display:flex; align-items:center; gap:4px; }
+    .cust-star { color:#d97706; font-size:14.5px; display:flex; align-items:center; gap:3px; }
+    
+    .info-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #edf2fb; font-size:13.5px; }
     .info-row:last-child { border-bottom:none; }
-    .info-lbl { font-size:15px;color:#444;display:flex;align-items:center;gap:8px;font-weight:500; }
-    .info-val { font-size:16px;font-weight:900;color:#1245c8; }
-    .total-card { background:linear-gradient(90deg,#0e3dc7 0%,#1a6fe0 100%);border-radius:16px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 22px rgba(14,61,199,0.35); }
-    .total-lbl { font-size:15px;font-weight:800;color:rgba(255,255,255,0.95);text-transform:uppercase;letter-spacing:0.5px; }
-    .total-amt { font-size:40px;font-weight:900;color:#ffffff;line-height:1; }
-    .total-curr { font-size:22px;font-weight:700;color:rgba(255,255,255,0.95);margin-left:4px; }
-    .notice-card { background:#ffffff;border:1.5px solid #e0e8f8;border-left:4px solid #1245c8;border-radius:16px;padding:15px 20px;box-shadow:0 2px 10px rgba(0,40,160,0.05); }
-    .notice-title { font-size:15px;font-weight:900;color:#1245c8;display:flex;align-items:center;gap:8px;margin-bottom:8px; }
-    .notice-text { font-size:14px;color:#2d3a5a;line-height:1.75;font-weight:500; }
-    .pay-card { background:white;border-radius:16px;border:1.5px solid #e0e8f8;padding:18px;text-align:center;box-shadow:0 2px 10px rgba(0,40,160,0.05); }
-    .pay-title { font-size:14px;font-weight:800;color:#1245c8;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px; }
-    .pay-sub { font-size:12px;color:#8899bb;margin-bottom:14px; }
-    .qr-wrap { display:inline-flex;padding:8px;background:white;border-radius:12px;border:1.5px solid #e0e8f8;box-shadow:0 4px 14px rgba(0,0,0,0.08);margin-bottom:14px; }
-    .qr-wrap img { width:170px;height:170px;display:block;border-radius:6px; }
-    .chips { display:flex;justify-content:center;gap:8px; }
-    .chip { background:#f0f5ff;border:1.5px solid #c8d8f8;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;color:#1245c8; }
-    .footer { background:linear-gradient(90deg,#0a2d8f,#1245c8);padding:14px 20px;text-align:center; }
-    .footer-text { font-size:13px;color:rgba(255,255,255,0.85);display:inline-flex;align-items:center;gap:6px; }
-    .footer-brand { font-weight:800;color:#fff; }
-    .footer-heart { color:#ff5252; }
+    .info-lbl { color:#475569; display:flex; align-items:center; gap:8px; font-weight:500; }
+    .info-val { font-size:14.5px; font-weight:700; color:#0d5bd7; }
+    
+    .total-card { background:linear-gradient(90deg,#0d5bd7 0%,#1570ef 100%); border-radius:14px; padding:9px 14px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 6px 18px rgba(13,91,215,0.32); }
+    .total-left { display:flex; align-items:center; gap:8px; }
+    .total-coin { width:44px; height:40px; object-fit:contain; }
+    .total-lbl { font-size:13.5px; font-weight:800; color:rgba(255,255,255,0.95); text-transform:uppercase; letter-spacing:0.5px; }
+    .total-amt { font-size:36px; font-weight:900; color:#ffd740; line-height:1; text-shadow:0 2px 8px rgba(0,0,0,0.25); display:inline-flex; align-items:baseline; }
+    .total-curr { font-size:20px; font-weight:800; color:#ffd740; margin-left:3px; }
+    
+    .notice-card { background:#fffbe6; border:1.5px solid #ffe58f; border-radius:13px; padding:8px 12px; box-shadow:0 2px 6px rgba(245,158,11,0.06); display:flex; gap:8px; align-items:flex-start; }
+    .notice-icon { font-size:18px; line-height:1; }
+    .notice-content { flex:1; }
+    .notice-title { font-size:13px; font-weight:800; color:#0f358a; margin-bottom:2px; }
+    .notice-text { font-size:12px; color:#475569; line-height:1.45; font-weight:500; }
+    
+    .pay-card { background:white; border-radius:14px; border:1.5px solid #e0e8f8; padding:8px 12px; text-align:center; box-shadow:0 2px 8px rgba(0,40,160,0.04); }
+    .pay-title { font-size:12.5px; font-weight:800; color:#0f358a; text-transform:uppercase; letter-spacing:0.8px; display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:5px; }
+    .qr-wrap { display:inline-flex; padding:5px; background:white; border-radius:10px; border:1.5px solid #e2ebfa; box-shadow:0 3px 10px rgba(0,0,0,0.06); margin-bottom:5px; }
+    .qr-wrap img { width:140px; height:140px; display:block; border-radius:6px; }
+    .chips { display:flex; justify-content:center; gap:6px; }
+    .chip { background:#eef4ff; border:1px solid #c8dcfc; padding:3px 10px; border-radius:16px; font-size:11px; font-weight:700; color:#0d5bd7; }
+    
+    .footer-img { width:100%; height:75px; object-fit:cover; display:block; margin-top:-2px; }
   </style>
 </head>
 <body>
   <div class="card" id="receipt">
-    <div class="header">
-      <div class="hc hc1"></div><div class="hc hc2"></div>
-      <div class="sparkles">
-        <span class="sparkle-icon sm">✦</span>
-        <span class="sparkle-icon">✦</span>
-        <span class="sparkle-icon sm">✦</span>
-      </div>
-      <div class="brand-name">GOLD LAUNDRY</div>
-      <div class="brand-sub">Dịch vụ giặt ủi sấy cao cấp</div>
-      <div class="wave">
-        <svg viewBox="0 0 560 48" xmlns="http://www.w3.org/2000/svg" height="48" preserveAspectRatio="none">
-          <path d="M0,28 C80,48 160,8 280,28 C400,48 480,8 560,28 L560,48 L0,48 Z" fill="#f0f5ff"/>
-        </svg>
-      </div>
+    <img class="header-img" src="${headerB64}" />
+    
+    <div class="status-wrap">
+      <img class="status-img" src="${badgeB64}" />
     </div>
-    <div class="status-bar">
-      <div class="status-line"></div>
-      <div class="status-diamond"></div>
-      <div class="status-text">Hoàn thành đơn hàng</div>
-      <div class="status-diamond"></div>
-      <div class="status-line right"></div>
-    </div>
+    
     <div class="body">
       <div class="wcard cust-row">
         <div class="cust-avatar">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
           </svg>
         </div>
-        <div>
-          <div class="cust-name">${displayName}</div>
+        <div class="cust-info">
+          <span class="cust-name">${cleanName}</span>
+          ${phoneDisplay ? `<span class="cust-phone">${phoneDisplay}</span>` : ""}
+          <span class="cust-star">${pointDisplay}</span>
         </div>
       </div>
-      <div class="wcard" style="padding:4px 18px;">
+      
+      <div class="wcard" style="padding:3px 14px;">
         <div class="info-row">
           <span class="info-lbl">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             Thời gian hoàn thành
           </span>
           <span class="info-val">${Complete_Date || ""}</span>
         </div>
         <div class="info-row">
           <span class="info-lbl">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#f59500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             Điểm tích lũy
           </span>
           <span class="info-val">${Point || "0"} điểm</span>
         </div>
       </div>
+      
       <div class="total-card">
-        <div class="total-lbl">Tổng thanh toán</div>
-        <div><span class="total-amt">${formattedAmount}</span><span class="total-curr">đ</span></div>
-      </div>
-      <div class="notice-card">
-        <div class="notice-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1245c8" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-          Hướng dẫn nhận đồ
+        <div class="total-left">
+          <img class="total-coin" src="${coinB64}" />
+          <div class="total-lbl">Tổng thanh toán</div>
         </div>
-        <div class="notice-text">Quý khách ghé trực tiếp cửa hàng để nhận đồ, hoặc nhắn lại tin nhắn này để được giao tận nơi (phụ phí ship).</div>
+        <div>
+          <span class="total-amt">${formattedAmount}<span class="total-curr">đ</span></span>
+        </div>
       </div>
+      
+      <div class="notice-card">
+        <div class="notice-icon">📦</div>
+        <div class="notice-content">
+          <div class="notice-title">Hướng dẫn nhận đồ</div>
+          <div class="notice-text">Quý khách ghé trực tiếp cửa hàng để nhận đồ, hoặc nhắn lại tin nhắn này để được giao tận nơi (phụ phí ship).</div>
+        </div>
+      </div>
+      
       ${
         qrBase64
           ? `
       <div class="pay-card">
         <div class="pay-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1245c8" stroke-width="2"><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0f358a" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
           Thanh toán chuyển khoản
         </div>
         <div class="qr-wrap"><img src="${qrBase64}"/></div>
@@ -466,13 +479,8 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
           : ""
       }
     </div>
-    <div class="footer">
-      <div class="footer-text">
-        Cảm ơn quý khách đã tin tưởng
-        <span class="footer-brand">Gold Laundry</span>
-        <span class="footer-heart">❤</span>
-      </div>
-    </div>
+    
+    <img class="footer-img" src="${footerB64}" />
   </div>
 </body>
 </html>`;
