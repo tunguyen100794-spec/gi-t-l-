@@ -364,45 +364,45 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
     body { font-family:'Be Vietnam Pro','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif; background:transparent; width:550px; }
     .card { width:550px; background:#f0f5ff; border-radius:24px; overflow:hidden; box-shadow:0 14px 44px rgba(0,35,130,0.18); border:1.5px solid #d4e3fc; }
     
-    .header-img { width:100%; height:245px; object-fit:cover; display:block; }
+    .header-img { width:100%; height:232px; object-fit:cover; display:block; }
     
-    .status-wrap { text-align:center; margin-top:4px; margin-bottom:2px; padding:0 14px; }
-    .status-img { width:100%; max-width:440px; display:block; margin:0 auto; }
+    .status-wrap { text-align:center; margin-top:3px; margin-bottom:2px; padding:0 14px; }
+    .status-img { width:100%; max-width:430px; display:block; margin:0 auto; }
     
     .body { padding:4px 14px 10px; display:flex; flex-direction:column; gap:6px; }
     
     .wcard { background:white; border-radius:14px; border:1.5px solid #e0e8f8; padding:8px 14px; box-shadow:0 2px 8px rgba(0,40,160,0.04); }
     
-    .cust-row { display:flex; align-items:center; gap:12px; }
-    .cust-avatar { width:42px; height:42px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#0d5bd7,#258cfb); display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(13,91,215,0.3); }
+    .cust-row { display:flex; align-items:center; gap:14px; padding:9px 16px; }
+    .cust-avatar { width:46px; height:46px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#0d5bd7,#258cfb); display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(13,91,215,0.3); }
     .cust-info { display:flex; flex-direction:column; gap:2px; }
-    .cust-name { font-size:18px; font-weight:800; color:#0d1b3e; line-height:1.2; }
-    .cust-phone { color:#475569; font-size:14px; font-weight:600; display:flex; align-items:center; gap:4px; }
+    .cust-name { font-size:22px; font-weight:900; color:#0d1b3e; line-height:1.2; }
+    .cust-phone { color:#475569; font-size:15px; font-weight:600; display:flex; align-items:center; gap:5px; }
     
-    .info-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #edf2fb; font-size:13.5px; }
+    .info-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid #edf2fb; font-size:13.5px; }
     .info-row:last-child { border-bottom:none; }
     .info-lbl { color:#475569; display:flex; align-items:center; gap:8px; font-weight:500; }
     .info-val { font-size:14.5px; font-weight:700; color:#0d5bd7; }
     
-    .total-card { background:linear-gradient(90deg,#0d5bd7 0%,#1570ef 100%); border-radius:14px; padding:9px 14px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 6px 18px rgba(13,91,215,0.32); }
-    .total-left { display:flex; align-items:center; gap:8px; }
-    .total-coin { width:44px; height:40px; object-fit:contain; }
-    .total-lbl { font-size:13.5px; font-weight:800; color:rgba(255,255,255,0.95); text-transform:uppercase; letter-spacing:0.5px; }
-    .total-amt { font-size:36px; font-weight:900; color:#ffd740; line-height:1; text-shadow:0 2px 8px rgba(0,0,0,0.25); display:inline-flex; align-items:baseline; }
-    .total-curr { font-size:20px; font-weight:800; color:#ffd740; margin-left:3px; }
+    .total-card { background:linear-gradient(90deg,#0d5bd7 0%,#1570ef 100%); border-radius:14px; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 6px 18px rgba(13,91,215,0.32); }
+    .total-left { display:flex; align-items:center; gap:10px; }
+    .total-coin { width:48px; height:44px; object-fit:contain; }
+    .total-lbl { font-size:14px; font-weight:800; color:rgba(255,255,255,0.95); text-transform:uppercase; letter-spacing:0.5px; }
+    .total-amt { font-size:44px; font-weight:900; color:#ffd740; line-height:1; text-shadow:0 2px 10px rgba(0,0,0,0.3); display:inline-flex; align-items:baseline; }
+    .total-curr { font-size:24px; font-weight:800; color:#ffd740; margin-left:4px; }
     
-    .notice-card { background:#fffbe6; border:1.5px solid #ffe58f; border-radius:13px; padding:8px 12px; box-shadow:0 2px 6px rgba(245,158,11,0.06); display:flex; gap:8px; align-items:flex-start; }
-    .notice-icon { font-size:18px; line-height:1; }
+    .notice-card { background:#fffbe6; border:1.5px solid #ffe58f; border-radius:12px; padding:7px 12px; box-shadow:0 2px 6px rgba(245,158,11,0.06); display:flex; gap:8px; align-items:flex-start; }
+    .notice-icon { font-size:17px; line-height:1; }
     .notice-content { flex:1; }
-    .notice-title { font-size:13px; font-weight:800; color:#0f358a; margin-bottom:2px; }
-    .notice-text { font-size:12px; color:#475569; line-height:1.45; font-weight:500; }
+    .notice-title { font-size:12.5px; font-weight:800; color:#0f358a; margin-bottom:1px; }
+    .notice-text { font-size:11.5px; color:#475569; line-height:1.4; font-weight:500; }
     
-    .pay-card { background:white; border-radius:14px; border:1.5px solid #e0e8f8; padding:8px 12px; text-align:center; box-shadow:0 2px 8px rgba(0,40,160,0.04); }
-    .pay-title { font-size:12.5px; font-weight:800; color:#0f358a; text-transform:uppercase; letter-spacing:0.8px; display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:5px; }
-    .qr-wrap { display:inline-flex; padding:5px; background:white; border-radius:10px; border:1.5px solid #e2ebfa; box-shadow:0 3px 10px rgba(0,0,0,0.06); margin-bottom:5px; }
-    .qr-wrap img { width:140px; height:140px; display:block; border-radius:6px; }
+    .pay-card { background:white; border-radius:13px; border:1.5px solid #e0e8f8; padding:7px 12px; text-align:center; box-shadow:0 2px 8px rgba(0,40,160,0.04); }
+    .pay-title { font-size:12px; font-weight:800; color:#0f358a; text-transform:uppercase; letter-spacing:0.8px; display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:4px; }
+    .qr-wrap { display:inline-flex; padding:4px; background:white; border-radius:10px; border:1.5px solid #e2ebfa; box-shadow:0 3px 10px rgba(0,0,0,0.06); margin-bottom:4px; }
+    .qr-wrap img { width:135px; height:135px; display:block; border-radius:6px; }
     .chips { display:flex; justify-content:center; gap:6px; }
-    .chip { background:#eef4ff; border:1px solid #c8dcfc; padding:3px 10px; border-radius:16px; font-size:11px; font-weight:700; color:#0d5bd7; }
+    .chip { background:#eef4ff; border:1px solid #c8dcfc; padding:2px 10px; border-radius:16px; font-size:11px; font-weight:700; color:#0d5bd7; }
     
     .footer-img { width:100%; height:75px; object-fit:cover; display:block; margin-top:-2px; }
   </style>
@@ -418,7 +418,7 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
     <div class="body">
       <div class="wcard cust-row">
         <div class="cust-avatar">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
           </svg>
         </div>
@@ -428,7 +428,7 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
         </div>
       </div>
       
-      <div class="wcard" style="padding:3px 14px;">
+      <div class="wcard" style="padding:2px 14px;">
         <div class="info-row">
           <span class="info-lbl">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
