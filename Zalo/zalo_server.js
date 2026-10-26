@@ -8,6 +8,7 @@ const puppeteer = require("puppeteer");
 const os = require("os");
 const QRCode = require("qrcode");
 const { execSync } = require("child_process");
+const birthdayManager = require("./birthday_manager");
 
 
 function cleanCustomerName(name) {
@@ -684,7 +685,8 @@ app.get("/", (req, res) => {
     </div>
     <p>
       <b>Port 3001:</b> Webhook AppSheet (gold-zalo.vtechqn.online)<br>
-      <b>Port 5050:</b> Web Thu Ngân (quanly.html - Mời Thẻ VIP)
+      <b>Port 5050:</b> Web Thu Ngân (quanly.html - Mời Thẻ VIP)<br>
+      <b>🎂 Sinh Nhật:</b> Tự động quét 08:30 sáng (Voucher 50%)
     </p>
   </div>
 </body>
@@ -764,6 +766,103 @@ app.post("/webhook/zalo", async (req, res) => {
     res.status(500).json({ ok: false, error: e.message });
   }
 });
+
+// ─────────────────────────────────────────────────────────
+// 5. API Chúc mừng Sinh Nhật Tự Động & Voucher 50%
+// ─────────────────────────────────────────────────────────
+
+// 5.1 Tra cứu danh sách sinh nhật hôm nay (hỗ trợ ?date=YYYY-MM-DD để tra cứu ngày bất kỳ)
+app.get("/api/birthday/today", async (req, res) => {
+  try {
+    const targetDate = req.query.date ? new Date(req.query.date) : new Date();
+    const data = await birthdayManager.getBirthdaysToday(targetDate);
+    res.json({ ok: true, data });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// 5.2 Kích hoạt quét và gửi tin nhắn sinh nhật ngay lập tức
+app.post("/api/birthday/send-now", async (req, res) => {
+  if (!isZaloReady || !zaloClient) {
+    return res.status(503).json({ ok: false, error: "Zalo Gateway chưa sẵn sàng kết nối." });
+  }
+  try {
+    const result = await birthdayManager.runDailyBirthdayCheck({
+      zaloClient,
+      enqueueTask,
+      sendTelegramMessage
+    });
+    res.json({ ok: true, result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// 5.3 Gửi thử nghiệm lời chúc mừng sinh nhật tới số điện thoại test
+app.post("/api/birthday/send-test", async (req, res) => {
+  if (!isZaloReady || !zaloClient) {
+    return res.status(503).json({ ok: false, error: "Zalo Gateway chưa sẵn sàng kết nối." });
+  }
+  const { phone, name, discount } = req.body || {};
+  if (!phone) {
+    return res.status(400).json({ ok: false, error: "Thiếu số điện thoại thử nghiệm." });
+  }
+  try {
+    const member = {
+      phone,
+      customer_name: name || "Khách hàng thử nghiệm",
+      clean_name: name || "Khách hàng thử nghiệm"
+    };
+    const result = await enqueueTask(() =>
+      birthdayManager.sendBirthdayWishDirect({
+        member,
+        zaloClient,
+        discountPercent: discount || 50,
+        force: true
+      })
+    );
+    res.json({ ok: true, data: result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────
+// Bộ Lập Lịch Tự Động (Daily Birthday Scheduler)
+// Quét và gửi tự động lúc 08:30 sáng mỗi ngày
+// ─────────────────────────────────────────────────────────
+let lastBirthdayRunDay = "";
+
+setInterval(async () => {
+  try {
+    const now = new Date();
+    const vnNow = new Date(now.getTime() + (7 * 60 + now.getTimezoneOffset()) * 60000);
+    const hour = vnNow.getHours();
+    const minute = vnNow.getMinutes();
+    const dayStr = `${vnNow.getFullYear()}-${String(vnNow.getMonth() + 1).padStart(2, "0")}-${String(vnNow.getDate()).padStart(2, "0")}`;
+
+    const config = birthdayManager.loadConfig();
+    const targetHour = config.check_hour !== undefined ? config.check_hour : 8;
+    const targetMinute = config.check_minute !== undefined ? config.check_minute : 30;
+
+    if (hour === targetHour && minute === targetMinute && lastBirthdayRunDay !== dayStr) {
+      if (isZaloReady && zaloClient) {
+        console.log(`[BDAY-SCHEDULER] ⏰ Đã đến ${targetHour}:${String(targetMinute).padStart(2, "0")} sáng ngày ${dayStr}. Kích hoạt tự động quét sinh nhật...`);
+        lastBirthdayRunDay = dayStr;
+        await birthdayManager.runDailyBirthdayCheck({
+          zaloClient,
+          enqueueTask,
+          sendTelegramMessage
+        });
+      } else {
+        console.log(`[BDAY-SCHEDULER] ⚠️ Đã đến giờ quét sinh nhật nhưng Zalo chưa sẵn sàng. Sẽ kiểm tra lại trong phút tới...`);
+      }
+    }
+  } catch (schedErr) {
+    console.error("[BDAY-SCHEDULER] Lỗi bộ lập lịch sinh nhật:", schedErr.message);
+  }
+}, 30 * 1000);
 
 // ─────────────────────────────────────────────────────────
 // Khởi chạy đồng thời 2 Cổng: 3001 (AppSheet) & 5050 (Thu ngân)
