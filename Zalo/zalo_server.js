@@ -16,7 +16,9 @@ function cleanCustomerName(name) {
   let s = String(name).trim();
   s = s.replace(/(\+?84|0)?[0-9]{9,10}/g, "");
   s = s.replace(/[\*\(\)]+/g, " ");
+  s = s.replace(/[\s\-\:\.\/]+$/g, "");
   s = s.replace(/\s+[0-9]+$/g, "");
+  s = s.replace(/[\s\-\:\.\/]+$/g, "");
   s = s.replace(/\s+/g, " ").trim();
   return s;
 }
@@ -344,9 +346,11 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
     : "";
 
   const { Customer_Name, Complete_Date, Bill_Amount, Point, Customer_Phone } = data;
-  const cleanName = Customer_Name || Customer_Phone || "Khách hàng";
+  let cleanName = cleanCustomerName(Customer_Name);
+  if (!cleanName || cleanName === Customer_Phone) {
+    cleanName = "Quý khách";
+  }
   const phoneDisplay = Customer_Phone ? `📞 ${Customer_Phone}` : "";
-  const pointDisplay = Point ? `⭐ ${Point} điểm` : "⭐ 0 điểm";
   let rawAmount = parseInt(String(Bill_Amount || "0").replace(/[^0-9]/g, "")) || 0;
   const formattedAmount = rawAmount.toLocaleString("vi-VN");
 
@@ -369,12 +373,11 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
     
     .wcard { background:white; border-radius:14px; border:1.5px solid #e0e8f8; padding:8px 14px; box-shadow:0 2px 8px rgba(0,40,160,0.04); }
     
-    .cust-row { display:flex; align-items:center; gap:10px; }
-    .cust-avatar { width:40px; height:40px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#0d5bd7,#258cfb); display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(13,91,215,0.3); }
-    .cust-info { display:flex; align-items:center; gap:10px; font-size:15px; font-weight:700; color:#0d1b3e; flex-wrap:wrap; }
-    .cust-name { font-size:18px; font-weight:800; color:#0d1b3e; }
-    .cust-phone { color:#1e293b; font-size:14.5px; display:flex; align-items:center; gap:4px; }
-    .cust-star { color:#d97706; font-size:14.5px; display:flex; align-items:center; gap:3px; }
+    .cust-row { display:flex; align-items:center; gap:12px; }
+    .cust-avatar { width:42px; height:42px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#0d5bd7,#258cfb); display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(13,91,215,0.3); }
+    .cust-info { display:flex; flex-direction:column; gap:2px; }
+    .cust-name { font-size:18px; font-weight:800; color:#0d1b3e; line-height:1.2; }
+    .cust-phone { color:#475569; font-size:14px; font-weight:600; display:flex; align-items:center; gap:4px; }
     
     .info-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #edf2fb; font-size:13.5px; }
     .info-row:last-child { border-bottom:none; }
@@ -420,9 +423,8 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
           </svg>
         </div>
         <div class="cust-info">
-          <span class="cust-name">${cleanName}</span>
-          ${phoneDisplay ? `<span class="cust-phone">${phoneDisplay}</span>` : ""}
-          <span class="cust-star">${pointDisplay}</span>
+          <div class="cust-name">${cleanName}</div>
+          ${phoneDisplay ? `<div class="cust-phone">${phoneDisplay}</div>` : ""}
         </div>
       </div>
       
