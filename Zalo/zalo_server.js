@@ -559,9 +559,8 @@ async function handleAppSheetOrder(data) {
 
       // Gửi tin nhắn chữ riêng biệt kêu gọi đăng ký thành viên
       try {
-        const cleanPhone = Customer_Phone ? String(Customer_Phone).replace(/[^0-9]/g, "") : "";
-        const registerUrl = cleanPhone ? `https://giatsayquynhon.vn/the/?phone=${cleanPhone}` : "https://giatsayquynhon.vn/the/";
-        const ctaMessage = `Cảm ơn quý khách đã sử dụng dịch vụ , để đặt dịch vụ và nhận ưu đãi hãy nhấn vào link để đăng ký thành viên:\n👉 ${registerUrl}`;
+        const shortCardUrl = "giatsayquynhon.vn/the";
+        const ctaMessage = `Cảm ơn quý khách đã sử dụng dịch vụ của chúng tôi! Quý khách hãy đăng ký thẻ thành viên để tích điểm nhận quà và giặt 7 lần tặng 1 lần tại:\n👉 ${shortCardUrl}`;
         await new Promise((resolve) => setTimeout(resolve, 500));
         console.log("[BOT-ORDER] Sending follow-up VIP card link to:", uid);
         await zaloClient.sendMessage({ msg: ctaMessage }, uid);
