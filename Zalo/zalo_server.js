@@ -363,7 +363,7 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
     .header-img { width:100%; height:245px; object-fit:cover; display:block; }
     
     .status-wrap { text-align:center; margin-top:4px; margin-bottom:2px; padding:0 14px; }
-    .status-img { width:100%; max-width:490px; display:block; margin:0 auto; }
+    .status-img { width:100%; max-width:440px; display:block; margin:0 auto; }
     
     .body { padding:4px 14px 10px; display:flex; flex-direction:column; gap:6px; }
     
@@ -556,6 +556,18 @@ async function handleAppSheetOrder(data) {
     console.log("[BOT-ORDER] Sending Zalo message to:", uid);
     if (fs.existsSync(receiptImagePath)) {
       await zaloClient.sendMessage({ msg: "", attachments: [receiptImagePath] }, uid);
+
+      // Gửi tin nhắn chữ riêng biệt kêu gọi đăng ký thành viên
+      try {
+        const cleanPhone = Customer_Phone ? String(Customer_Phone).replace(/[^0-9]/g, "") : "";
+        const registerUrl = cleanPhone ? `https://giatsayquynhon.vn/the/?phone=${cleanPhone}` : "https://giatsayquynhon.vn/the/";
+        const ctaMessage = `Cảm ơn quý khách đã sử dụng dịch vụ , để đặt dịch vụ và nhận ưu đãi hãy nhấn vào link để đăng ký thành viên:\n👉 ${registerUrl}`;
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        console.log("[BOT-ORDER] Sending follow-up VIP card link to:", uid);
+        await zaloClient.sendMessage({ msg: ctaMessage }, uid);
+      } catch (ctaErr) {
+        console.error("[BOT-ORDER] Send follow-up message error:", ctaErr.message);
+      }
     }
   } finally {
     if (fs.existsSync(receiptImagePath)) {
