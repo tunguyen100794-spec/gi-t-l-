@@ -548,23 +548,34 @@ async function handleAppSheetOrder(data) {
 // ─────────────────────────────────────────────────────────
 // Quản lý đăng nhập Zalo (Telegram QR)
 // ─────────────────────────────────────────────────────────
-async function checkAndLogin() {
+async function checkAndLogin(force = false) {
+  if (force) {
+    isZaloReady = false;
+    isLoggingIn = false;
+  }
   if (isZaloReady || isLoggingIn) return;
   isLoggingIn = true;
 
   try {
     let zaloInit = new Zalo();
 
-    if (fs.existsSync(ZALO_CREDENTIALS_PATH)) {
-      console.log("Found Zalo credentials, attempting to login...");
-      const credsRaw = await fsPromises.readFile(ZALO_CREDENTIALS_PATH, "utf8");
-      const credentials = JSON.parse(credsRaw);
-      zaloClient = await zaloInit.login(credentials);
-      isZaloReady = true;
-      console.log("✅ Zalo login successful with saved credentials!");
-      await sendTelegramMessage("✅ Đăng nhập Zalo thành công (sử dụng session lưu trữ)!");
-      isLoggingIn = false;
-      return;
+    if (!force && fs.existsSync(ZALO_CREDENTIALS_PATH)) {
+      try {
+        console.log("Found Zalo credentials, attempting to login...");
+        const credsRaw = await fsPromises.readFile(ZALO_CREDENTIALS_PATH, "utf8");
+        const credentials = JSON.parse(credsRaw);
+        zaloClient = await zaloInit.login(credentials);
+        isZaloReady = true;
+        console.log("✅ Zalo login successful with saved credentials!");
+        await sendTelegramMessage("✅ Đăng nhập Zalo thành công (sử dụng session lưu trữ)!");
+        isLoggingIn = false;
+        return;
+      } catch (savedLoginErr) {
+        console.warn("⚠️ Saved credentials login failed, switching to QR login:", savedLoginErr.message);
+        if (fs.existsSync(ZALO_CREDENTIALS_PATH)) {
+          try { fs.unlinkSync(ZALO_CREDENTIALS_PATH); } catch (e) {}
+        }
+      }
     }
 
     console.log("Starting QR login...");
@@ -623,6 +634,20 @@ app.get("/api/status", (req, res) => {
   });
 });
 
+// 1.1 Yêu cầu gửi lại mã QR đăng nhập qua Telegram
+app.all(["/api/relogin", "/api/login-qr"], async (req, res) => {
+  console.log("⚡ Received relogin request, regenerating QR...");
+  if (fs.existsSync(ZALO_CREDENTIALS_PATH)) {
+    try { fs.unlinkSync(ZALO_CREDENTIALS_PATH); } catch (e) {}
+  }
+  isZaloReady = false;
+  checkAndLogin(true);
+  res.json({
+    ok: true,
+    message: "Đang tạo mã QR mới và gửi đến Telegram. Vui lòng kiểm tra Telegram để quét mã!",
+  });
+});
+
 // 2. Trang chủ hiển thị trạng thái tổng quan
 app.get("/", (req, res) => {
   res.send(`<!DOCTYPE html>
@@ -674,6 +699,22 @@ app.post("/api/send-zalo", async (req, res) => {
     const result = await enqueueTask(() => handleSendVipCard({ phone, message }));
     return res.json({ ok: true, data: result });
   } catch (err) {
+    const errorMsg = err.message ? err.message.toLowerCase() : "";
+    if (
+      errorMsg.includes("not logged in") ||
+      errorMsg.includes("session") ||
+      errorMsg.includes("login") ||
+      errorMsg.includes("auth") ||
+      errorMsg.includes("zpw_sek") ||
+      err.code === 600
+    ) {
+      console.log("Authentication error detected in send-zalo, triggering QR re-login...");
+      isZaloReady = false;
+      if (fs.existsSync(ZALO_CREDENTIALS_PATH)) {
+        try { fs.unlinkSync(ZALO_CREDENTIALS_PATH); } catch (e) {}
+      }
+      checkAndLogin(true);
+    }
     return res.status(500).json({ ok: false, error: err.message || "Lỗi gửi Thẻ VIP Zalo" });
   }
 });
@@ -699,10 +740,16 @@ app.post("/webhook/zalo", async (req, res) => {
       errorMsg.includes("not logged in") ||
       errorMsg.includes("session") ||
       errorMsg.includes("login") ||
-      errorMsg.includes("auth")
+      errorMsg.includes("auth") ||
+      errorMsg.includes("zpw_sek") ||
+      e.code === 600
     ) {
-      console.log("Authentication error detected, setting isZaloReady to false");
+      console.log("Authentication error detected, triggering QR re-login...");
       isZaloReady = false;
+      if (fs.existsSync(ZALO_CREDENTIALS_PATH)) {
+        try { fs.unlinkSync(ZALO_CREDENTIALS_PATH); } catch (e) {}
+      }
+      checkAndLogin(true);
     }
     res.status(500).json({ ok: false, error: e.message });
   }
