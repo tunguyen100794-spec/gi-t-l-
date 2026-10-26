@@ -316,7 +316,7 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Be Vietnam Pro',sans-serif; background:transparent; width:560px; }
+    body { font-family:'Be Vietnam Pro','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif; background:transparent; width:560px; }
     .card { width:560px; background:#f0f5ff; border-radius:24px; overflow:hidden; box-shadow:0 16px 48px rgba(0,30,120,0.18); }
     .header { background:linear-gradient(160deg,#0a2d8f 0%,#1245c8 55%,#1a6fe0 100%); padding:32px 30px 0; text-align:center; position:relative; overflow:hidden; }
     .header::before { content:''; position:absolute; top:-60px; left:50%; transform:translateX(-50%); width:460px; height:260px; background:radial-gradient(ellipse,rgba(255,255,255,0.10) 0%,transparent 70%); }
@@ -339,7 +339,7 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
     .wcard { background:white;border-radius:16px;border:1.5px solid #e0e8f8;padding:14px 18px;box-shadow:0 2px 10px rgba(0,40,160,0.05); }
     .cust-row { display:flex;align-items:center;gap:14px; }
     .cust-avatar { width:50px;height:50px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#1245c8,#2d8ef5);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(18,69,200,0.3); }
-    .cust-name { font-size:20px;font-weight:900;color:#0d1b3e; }
+    .cust-name { font-size:20px;font-weight:700;color:#0d1b3e;line-height:1.3; }
     .cust-phone { font-size:14px;color:#6b7db3;margin-top:4px;display:flex;align-items:center;gap:5px; }
     .info-row { display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #edf2fb; }
     .info-row:last-child { border-bottom:none; }
@@ -456,8 +456,10 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
 </body>
 </html>`;
 
-  await page.setContent(html, { waitUntil: "networkidle0" });
-  await page.evaluateHandle("document.fonts.ready");
+  await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 15000 });
+  try {
+    await page.evaluateHandle("document.fonts.ready");
+  } catch (fontErr) {}
   const element = await page.$("#receipt");
   await element.screenshot({ path: outputPath, omitBackground: true });
   await browser.close();
@@ -632,6 +634,14 @@ app.get("/api/status", (req, res) => {
     status: isZaloReady ? "ready" : isLoggingIn ? "logging_in" : "waiting",
     message: isZaloReady ? "Zalo Gateway đã sẵn sàng" : "Đang chờ kết nối Zalo...",
   });
+});
+
+// 1.0 Khởi động lại Server (PM2 tự động reload)
+app.all("/api/restart", (req, res) => {
+  res.json({ ok: true, message: "Đang khởi động lại dịch vụ Zalo Bot..." });
+  setTimeout(() => {
+    process.exit(0);
+  }, 1000);
 });
 
 // 1.1 Yêu cầu gửi lại mã QR đăng nhập qua Telegram
