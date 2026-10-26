@@ -172,9 +172,9 @@ async function composeVipCard(templatePath, qrPath, outPath) {
 }
 
 // ─────────────────────────────────────────────────────────
-// Nghiệp vụ: Gửi Thẻ VIP (Phục vụ Thu ngân / quanly.html)
+// Nghiệp vụ: Gửi Thẻ VIP hoặc Tin Nhắn Chữ
 // ─────────────────────────────────────────────────────────
-async function handleSendVipCard({ phone, message }) {
+async function handleSendVipCard({ phone, message, sendImage = true, noImage = false }) {
   if (!isZaloReady || !zaloClient) {
     throw new Error("Zalo Gateway chưa sẵn sàng hoặc chưa đăng nhập.");
   }
@@ -202,7 +202,7 @@ async function handleSendVipCard({ phone, message }) {
 
   const targetUid = userResult.uid || userResult.userId;
   const targetName = userResult.display_name || userResult.displayName || userResult.zalo_name || cleanPhone;
-  console.log(`[BOT-VIP] Tìm thấy khách: ${targetName} (UID: ${targetUid}). Bắt đầu ghép Thẻ VIP...`);
+  console.log(`[BOT-VIP] Tìm thấy khách: ${targetName} (UID: ${targetUid})`);
 
   const cardUrl = `https://giatsayquynhon.vn/the/?phone=${cleanPhone}`;
   const cleanName = cleanCustomerName(targetName);
@@ -224,6 +224,26 @@ async function handleSendVipCard({ phone, message }) {
       `${shortCardUrl}\n\n` +
       `Hotline hỗ trợ: 0777779711\n` +
       `Kính chúc Quý khách một ngày tốt lành! 🌷`;
+
+  const shouldSendImage = (sendImage !== false && !noImage);
+
+  // Nếu không yêu cầu gửi ảnh (chỉ gửi tin nhắn chữ)
+  if (!shouldSendImage) {
+    try {
+      console.log(`[BOT-MSG] Đang gửi tin nhắn chữ thuần túy tới ${targetName}...`);
+      await zaloClient.sendMessage({ msg: cardCaption }, targetUid);
+      console.log(`[BOT-MSG] ✓ Gửi tin nhắn chữ thành công tới ${targetName} (${cleanPhone})!`);
+      return { ok: true, uid: targetUid, name: targetName };
+    } catch (sendErr) {
+      console.warn(`[BOT-MSG] Gửi tin trực tiếp lỗi (${sendErr.message}), thử gửi lời mời kết bạn...`);
+      try {
+        await zaloClient.sendFriendRequest(cardCaption.slice(0, 150), targetUid);
+        return { ok: true, uid: targetUid, name: targetName, friendRequest: true };
+      } catch (frErr) {
+        throw new Error(`Không thể gửi tin Zalo: ${sendErr.message}`);
+      }
+    }
+  }
 
   const tempQrPath = path.join(os.tmpdir(), `temp_qr_${cleanPhone}_${Date.now()}.png`);
   const finalCardPath = path.join(os.tmpdir(), `card_${cleanPhone}_${Date.now()}.png`);
@@ -693,9 +713,9 @@ app.get("/", (req, res) => {
 </html>`);
 });
 
-// 3. Endpoint Mời Zalo Thẻ VIP (dành cho Web Thu Ngân quanly.html)
-app.post("/api/send-zalo", async (req, res) => {
-  const { phone, message } = req.body || {};
+// 3. Endpoint Mời Zalo Thẻ VIP hoặc gửi tin nhắn chữ
+app.post(["/api/send-zalo", "/api/send-message"], async (req, res) => {
+  const { phone, message, sendImage, noImage } = req.body || {};
   if (!phone) {
     return res.status(400).json({ ok: false, error: "Thiếu số điện thoại." });
   }
@@ -708,7 +728,7 @@ app.post("/api/send-zalo", async (req, res) => {
   }
 
   try {
-    const result = await enqueueTask(() => handleSendVipCard({ phone, message }));
+    const result = await enqueueTask(() => handleSendVipCard({ phone, message, sendImage, noImage }));
     return res.json({ ok: true, data: result });
   } catch (err) {
     const errorMsg = err.message ? err.message.toLowerCase() : "";

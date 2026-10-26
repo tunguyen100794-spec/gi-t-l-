@@ -232,7 +232,7 @@ function buildBirthdayMessage(member, discountPercent = 50, targetDate = new Dat
   const voucherCode = `SINHNHAT50-${phone}`;
 
   return `🎂 GOLD LAUNDRY KÍNH CHÚC MỪNG SINH NHẬT ${upperName}! 🎉\n\n` +
-    `Gold Laundry (282 Diên Hồng) thân gửi tới Quý khách lời chúc tuổi mới luôn ngập tràn niềm vui, nhiều sức khỏe, may mắn và luôn rạng ngời với những bộ trang phục tinh tươm nhất! 🌷\n\n` +
+    `Gold Laundry thân gửi tới Quý khách lời chúc tuổi mới luôn ngập tràn niềm vui, nhiều sức khỏe, may mắn và luôn rạng ngời với những bộ trang phục tinh tươm nhất! 🌷\n\n` +
     `🎁 MÓN QUÀ SINH NHẬT ĐẶC QUYỀN DÀNH TẶNG BẠN:\n` +
     `👉 VOUCHER GIẢM ${discountPercent}% ĐƠN HÀNG (DÙNG 1 LẦN DUY NHẤT)!\n` +
     `(Áp dụng giảm ${discountPercent}% cho 01 đơn giặt bất kỳ: giặt sấy, sấy gấp, giặt chăn ga mền khi ghé tiệm hoặc đặt giao nhận)\n\n` +
