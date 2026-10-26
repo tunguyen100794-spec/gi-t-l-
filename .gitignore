@@ -24,6 +24,8 @@ test_vip_out.png
 logs/
 *.log
 sent_vip_cache.json
+sent_birthday_cache.json
+birthday_config.json
 .pm2/
 .npm/
 
