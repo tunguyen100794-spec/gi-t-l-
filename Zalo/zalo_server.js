@@ -95,32 +95,57 @@ function enqueueTask(taskFn) {
 }
 
 // ─────────────────────────────────────────────────────────
-// Thông báo Telegram (giữ nguyên cấu hình cũ)
+// Thông báo Telegram (Auto-Retry 5 lần chống rớt mạng)
 // ─────────────────────────────────────────────────────────
-async function sendTelegramMessage(messageText) {
-  const token = "8418080766:AAGd8gRJyffpFQKUFoXshNnoc7jMoB6-BBI";
-  const chatId = "-1003447493989";
+async function sendTelegramMessage(messageText, targetChatId = null, maxRetries = 5) {
+  let token = "8418080766:AAGd8gRJyffpFQKUFoXshNnoc7jMoB6-BBI";
+  let defaultChatId = "-1003447493989";
+  try {
+    if (birthdayManager) {
+      const cfg = birthdayManager.loadConfig();
+      if (cfg && cfg.telegram_bot_token) token = cfg.telegram_bot_token;
+      if (cfg && cfg.telegram_chat_id) defaultChatId = cfg.telegram_chat_id;
+    }
+  } catch (e) {}
+  const chatId = targetChatId || defaultChatId;
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
 
-  try {
-    const nodeFetch = require("node-fetch");
-    const fetchFn = nodeFetch.default || nodeFetch;
+  const nodeFetch = require("node-fetch");
+  const fetchFn = nodeFetch.default || nodeFetch;
+  const delays = [3000, 5000, 8000, 12000, 15000];
 
-    const response = await fetchFn(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: messageText,
-      }),
-    });
-    const result = await response.json();
-    if (!result.ok) {
-      console.error("Failed to send Telegram text message:", result);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[TELEGRAM] Đang gửi thông báo tới nhóm (Lần ${attempt}/${maxRetries})...`);
+      const response = await fetchFn(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: messageText,
+        }),
+        timeout: 15000
+      });
+      const result = await response.json();
+      if (result.ok) {
+        console.log(`[TELEGRAM] ✓ Gửi thông báo thành công (Message ID: ${result.result.message_id})!`);
+        return result;
+      } else {
+        console.error(`[TELEGRAM] Lỗi phản hồi từ Telegram API (Lần ${attempt}):`, result);
+      }
+    } catch (error) {
+      console.error(`[TELEGRAM] Lỗi kết nối gửi tin (Lần ${attempt}/${maxRetries}):`, error.message);
     }
-  } catch (error) {
-    console.error("Error sending Telegram text message:", error);
+
+    if (attempt < maxRetries) {
+      const waitMs = delays[attempt - 1] || 5000;
+      console.log(`[TELEGRAM] Chờ ${waitMs / 1000}s trước khi thử lại...`);
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
   }
+
+  console.error(`[TELEGRAM] ❌ Đã thử ${maxRetries} lần nhưng không thể kết nối tới Telegram.`);
+  return null;
 }
 
 async function sendTelegramQR(qrPath) {
@@ -864,6 +889,36 @@ app.post("/api/birthday/send-test", async (req, res) => {
       })
     );
     res.json({ ok: true, data: result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// 5.4 Gửi lại báo cáo Telegram sinh nhật hôm nay (hoặc ?date=YYYY-MM-DD)
+app.post("/api/birthday/resend-report", async (req, res) => {
+  try {
+    const targetDate = req.body && req.body.date ? new Date(req.body.date) : new Date();
+    const birthdayData = await birthdayManager.getBirthdaysToday(targetDate);
+    const { target_date, day_month, members } = birthdayData;
+
+    if (!members || members.length === 0) {
+      return res.json({ ok: true, message: `Không có khách hàng nào có sinh nhật ngày ${day_month}` });
+    }
+
+    let teleMsg = `🎂 [BÁO CÁO BÙ SINH NHẬT - ${day_month}]:\n`;
+    teleMsg += `Tổng cộng ${members.length} khách hàng có sinh nhật trong ngày:\n\n`;
+
+    members.forEach((m, idx) => {
+      const icon = m.is_sent ? "✅" : "⏳";
+      const statusText = m.is_sent ? "Đã gửi Zalo" : "Chưa gửi";
+      teleMsg += `${idx + 1}. ${icon} ${m.customer_name} (${m.phone}) - ${statusText}\n`;
+    });
+
+    teleMsg += `\n🎁 Voucher giảm giá 50% áp dụng cho đơn hàng trong suốt tháng sinh nhật (${target_date}).`;
+    console.log(`[BDAY-REPORT] Đang kích hoạt gửi lại báo cáo Telegram cho ngày ${day_month}...`);
+    const teleRes = await sendTelegramMessage(teleMsg);
+
+    res.json({ ok: !!teleRes, message: teleRes ? "Đã gửi báo cáo Telegram thành công" : "Gửi thất bại sau 5 lần thử", telegram: teleRes });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }

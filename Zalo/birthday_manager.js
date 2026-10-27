@@ -356,9 +356,15 @@ async function runDailyBirthdayCheck({ zaloClient, enqueueTask, sendTelegramMess
       teleMsg += `${idx + 1}. ${icon} ${r.name} (${r.phone})${r.success ? "" : ` - Lỗi: ${r.error}`}\n`;
     });
 
-    teleMsg += `\n🎁 Voucher giảm giá 50% áp dụng duy nhất hôm nay (${target_date}).`;
+    teleMsg += `\n🎁 Voucher giảm giá 50% áp dụng cho đơn hàng trong suốt tháng sinh nhật (${target_date}).`;
+    console.log(`[BDAY-AUTO] Đang gửi báo cáo tổng kết tới Telegram...`);
     try {
-      await sendTelegramMessage(teleMsg);
+      const teleRes = await sendTelegramMessage(teleMsg);
+      if (teleRes) {
+        console.log(`[BDAY-AUTO] ✓ Đã gửi báo cáo Telegram thành công.`);
+      } else {
+        console.warn(`[BDAY-AUTO] ⚠️ Báo cáo Telegram thất bại sau 5 lần thử lại.`);
+      }
     } catch (teleErr) {
       console.error("[BDAY-AUTO] Lỗi gửi báo cáo Telegram:", teleErr.message);
     }
