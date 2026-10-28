@@ -463,20 +463,15 @@ async function triggerSendVipCard(phone, customerName) {
     const greeting = cleanName ? `KÍNH CHÀO ${cleanName.toUpperCase()}!` : "KÍNH CHÀO QUÝ KHÁCH!";
     const shortCardUrl = "giatsayquynhon.vn/the";
 
-    const greetingLine = cleanName ? `Kính chào Quý khách ${cleanName.toUpperCase()}` : "Kính chào Quý khách";
+    const greetingLine = cleanName ? `Kính chào Quý khách ${cleanName.toUpperCase()},` : "Kính chào Quý khách,";
 
     const cardCaption = 
       `🧺 GIẶT SẤY GOLD LAUNDRY\n` +
-      `${greetingLine}\n\n` +
-      `Cảm ơn Quý khách đã tin chọn dịch vụ giặt sấy Gold Laundry!\n\n` +
-      `Cửa hàng trân trọng kính mời Quý khách ĐĂNG KÝ THẺ THÀNH VIÊN để nhận ngay các đặc quyền: 💳\n` +
-      `• Tích lũy điểm thưởng đổi lượt giặt & quà tặng (Giặt 7 lần tặng 1 lần)\n` +
-      `• Theo dõi tiến độ đơn giặt trực tuyến tiện lợi\n` +
-      `• Nhận ưu đãi giảm giá độc quyền cho thành viên\n\n` +
-      `👉 Đăng ký mở thẻ hoàn toàn miễn phí tại:\n` +
-      `${shortCardUrl}\n\n` +
-      `Hotline hỗ trợ: 0777779711\n` +
-      `Kính chúc Quý khách một ngày tốt lành! 🌷`;
+      `${greetingLine}\n` +
+      `Cảm ơn Quý khách đã tin tưởng sử dụng dịch vụ tại Gold Laundry!\n\n` +
+      `Đăng ký thành viên MIỄN PHÍ để nhận ưu đãi: Giặt 7 lần tặng 1 lần, theo dõi đơn giặt trực tuyến và nhiều ưu đãi độc quyền.\n\n` +
+      `👉 Đăng ký: https://giatsayquynhon.vn/the\n\n` +
+      `Gold Laundry trân trọng cảm ơn Quý khách!`;
 
     console.log(`[VIP-AUTO] Đang gọi Zalo Gateway gửi Thẻ VIP tới ${cleanPhone}...`);
     const nodeFetch = require("node-fetch");
@@ -509,6 +504,10 @@ const goldlaundryRouter = express.Router();
 goldlaundryRouter.get("/", (req, res) => res.send("Gold Laundry Printer Ready - Use /goldlaundry/print"));
 goldlaundryRouter.get("/health", (req, res) => res.send("OK"));
 goldlaundryRouter.get("/last", (req, res) => res.json(LAST));
+goldlaundryRouter.all("/restart", (req, res) => {
+  res.json({ ok: true, message: "Restarting print server..." });
+  setTimeout(() => process.exit(0), 500);
+});
 
 goldlaundryRouter.post("/print", async (req, res) => {
   try {
