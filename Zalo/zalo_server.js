@@ -241,21 +241,23 @@ async function handleSendVipCard({ phone, message, sendImage = true, noImage = f
   const greeting = cleanName ? `KÍNH CHÀO ${cleanName.toUpperCase()}!` : "KÍNH CHÀO QUÝ KHÁCH!";
   const shortCardUrl = "giatsayquynhon.vn/the";
 
-  const greetingLine = cleanName ? `Kính chào Quý khách ${cleanName.toUpperCase()}` : "Kính chào Quý khách";
+  const greetingLine = cleanName ? `Kính chào Quý khách ${cleanName.toUpperCase()},` : "Kính chào Quý khách,";
+
+  const isOldTemplate = message && (
+    message.includes("tin chọn dịch vụ") || 
+    message.includes("đặc quyền: 💳") ||
+    message.includes("giatsayquynhon.vn/the\n\nHotline")
+  );
 
   const cardCaption =
-    message ||
-    `🧺 GIẶT SẤY GOLD LAUNDRY\n` +
-      `${greetingLine}\n\n` +
-      `Cảm ơn Quý khách đã tin chọn dịch vụ giặt sấy Gold Laundry!\n\n` +
-      `Cửa hàng trân trọng kính mời Quý khách ĐĂNG KÝ THẺ THÀNH VIÊN để nhận ngay các đặc quyền: 💳\n` +
-      `• Tích lũy điểm thưởng đổi lượt giặt & quà tặng (Giặt 7 lần tặng 1 lần)\n` +
-      `• Theo dõi tiến độ đơn giặt trực tuyến tiện lợi\n` +
-      `• Nhận ưu đãi giảm giá độc quyền cho thành viên\n\n` +
-      `👉 Đăng ký mở thẻ hoàn toàn miễn phí tại:\n` +
-      `${shortCardUrl}\n\n` +
-      `Hotline hỗ trợ: 0777779711\n` +
-      `Kính chúc Quý khách một ngày tốt lành! 🌷`;
+    (!message || isOldTemplate)
+      ? `🧺 GIẶT SẤY GOLD LAUNDRY\n` +
+        `${greetingLine}\n` +
+        `Cảm ơn Quý khách đã tin tưởng sử dụng dịch vụ tại Gold Laundry!\n\n` +
+        `Đăng ký thành viên MIỄN PHÍ để nhận ưu đãi: Giặt 7 lần tặng 1 lần, theo dõi đơn giặt trực tuyến và nhiều ưu đãi độc quyền.\n\n` +
+        `👉 Đăng ký: https://giatsayquynhon.vn/the\n\n` +
+        `Gold Laundry trân trọng cảm ơn Quý khách!`
+      : message;
 
   const shouldSendImage = (sendImage !== false && !noImage);
 
