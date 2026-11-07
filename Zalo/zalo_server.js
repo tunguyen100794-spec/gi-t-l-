@@ -4,6 +4,7 @@ const { Zalo } = require("zalo-api-final");
 const fs = require("fs");
 const fsPromises = require("fs").promises;
 const path = require("path");
+const crypto = require("crypto");
 const puppeteer = require("puppeteer");
 const os = require("os");
 const QRCode = require("qrcode");
@@ -56,6 +57,40 @@ const HEADER_MASCOT_PATH = path.join(ASSETS_DIR, "header_mascot.png");
 const BADGE_STATUS_PATH = path.join(ASSETS_DIR, "badge_status.png");
 const ICON_COINS_PATH = path.join(ASSETS_DIR, "icon_coins.png");
 const FOOTER_PATH = path.join(ASSETS_DIR, "footer.png");
+const ZALO_SECURITY_PATH = path.join(__dirname, "zalo_security.json");
+
+function validateApiKey(req) {
+  try {
+    const providedKey = req.headers["x-api-key"];
+    if (!providedKey || typeof providedKey !== "string") {
+      return false;
+    }
+
+    if (!fs.existsSync(ZALO_SECURITY_PATH)) {
+      console.error("[AUTH] Lỗi: File cấu hình bảo mật zalo_security.json không tồn tại!");
+      return false;
+    }
+
+    const sec = JSON.parse(fs.readFileSync(ZALO_SECURITY_PATH, "utf8"));
+    const configuredKey = sec && sec.api_key;
+    if (!configuredKey || typeof configuredKey !== "string") {
+      console.error("[AUTH] Lỗi: api_key trong zalo_security.json bị trống hoặc không hợp lệ!");
+      return false;
+    }
+
+    const bufProvided = Buffer.from(providedKey);
+    const bufConfigured = Buffer.from(configuredKey);
+
+    if (bufProvided.length !== bufConfigured.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(bufProvided, bufConfigured);
+  } catch (err) {
+    console.error("[AUTH] Lỗi xác thực API Key:", err.message);
+    return false;
+  }
+}
 
 let zaloClient = null;
 let isZaloReady = false;
@@ -763,6 +798,13 @@ app.get("/", (req, res) => {
 
 // 3. Endpoint Mời Zalo Thẻ VIP hoặc gửi tin nhắn chữ
 app.post(["/api/send-zalo", "/api/send-message"], async (req, res) => {
+  if (!validateApiKey(req)) {
+    return res.status(401).json({
+      ok: false,
+      error: "Unauthorized: Invalid or missing x-api-key header",
+    });
+  }
+
   const { phone, message, sendImage, noImage } = req.body || {};
   if (!phone) {
     return res.status(400).json({ ok: false, error: "Thiếu số điện thoại." });

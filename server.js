@@ -404,6 +404,19 @@ function buildPrintPayloadFromPNG(pngBuffer) {
 // ================== ZALO VIP CARD AUTO SEND (ANTI-SPAM CACHE 30 NGÀY) ==================
 const VIP_CACHE_FILE = path.join(__dirname, "sent_vip_cache.json");
 const VIP_COOLDOWN_DAYS = 15;
+const ZALO_SECURITY_PATH = path.join(__dirname, "Zalo", "zalo_security.json");
+
+function getZaloApiKey() {
+  try {
+    if (fs.existsSync(ZALO_SECURITY_PATH)) {
+      const sec = JSON.parse(fs.readFileSync(ZALO_SECURITY_PATH, "utf8"));
+      return sec.api_key || "";
+    }
+  } catch (e) {
+    console.error("[VIP-AUTO] Lỗi đọc zalo_security.json:", e.message);
+  }
+  return "";
+}
 
 
 function cleanCustomerName(name) {
@@ -477,9 +490,15 @@ async function triggerSendVipCard(phone, customerName) {
     const nodeFetch = require("node-fetch");
     const fetchFn = nodeFetch.default || nodeFetch;
 
+    const apiKey = getZaloApiKey();
+    const reqHeaders = { "Content-Type": "application/json" };
+    if (apiKey) {
+      reqHeaders["x-api-key"] = apiKey;
+    }
+
     const res = await fetchFn("http://127.0.0.1:5050/api/send-zalo", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: reqHeaders,
       body: JSON.stringify({
         phone: cleanPhone,
         message: cardCaption

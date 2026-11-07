@@ -8,10 +8,12 @@ package-lock.json
 
 # 2. File định danh và phiên đăng nhập Zalo (CỰC KỲ QUAN TRỌNG - BẢO MẬT)
 zalo_credentials.json
+zalo_security.json
 session.json
 zalo_n8n.json
 *.session
 *.credentials
+*.bak*
 
 # 3. Ảnh tạm và mã QR đăng nhập
 qr.png
