@@ -132,17 +132,13 @@ function enqueueTask(taskFn) {
 // ─────────────────────────────────────────────────────────
 // Thông báo Telegram (Auto-Retry 5 lần chống rớt mạng)
 // ─────────────────────────────────────────────────────────
+// Cấu hình Telegram mặc định: Nhóm Gold Laundry
+const TELEGRAM_BOT_TOKEN = "8418080766:AAGd8gRJyffpFQKUFoXshNnoc7jMoB6-BBI";
+const TELEGRAM_CHAT_ID = "-1003447493989";
+
 async function sendTelegramMessage(messageText, targetChatId = null, maxRetries = 5) {
-  let token = "8418080766:AAGd8gRJyffpFQKUFoXshNnoc7jMoB6-BBI";
-  let defaultChatId = "-1003447493989";
-  try {
-    if (birthdayManager) {
-      const cfg = birthdayManager.loadConfig();
-      if (cfg && cfg.telegram_bot_token) token = cfg.telegram_bot_token;
-      if (cfg && cfg.telegram_chat_id) defaultChatId = cfg.telegram_chat_id;
-    }
-  } catch (e) {}
-  const chatId = targetChatId || defaultChatId;
+  const token = TELEGRAM_BOT_TOKEN;
+  const chatId = targetChatId || TELEGRAM_CHAT_ID;
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
 
   const nodeFetch = require("node-fetch");
@@ -151,7 +147,7 @@ async function sendTelegramMessage(messageText, targetChatId = null, maxRetries 
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`[TELEGRAM] Đang gửi thông báo tới nhóm (Lần ${attempt}/${maxRetries})...`);
+      console.log(`[TELEGRAM] Đang gửi thông báo tới nhóm Gold Laundry (Lần ${attempt}/${maxRetries})...`);
       const response = await fetchFn(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -183,32 +179,50 @@ async function sendTelegramMessage(messageText, targetChatId = null, maxRetries 
   return null;
 }
 
-async function sendTelegramQR(qrPath) {
-  const token = "8418080766:AAGd8gRJyffpFQKUFoXshNnoc7jMoB6-BBI";
-  const chatId = "-1003447493989";
+async function sendTelegramQR(qrPath, maxRetries = 5) {
+  const token = TELEGRAM_BOT_TOKEN;
+  const chatId = TELEGRAM_CHAT_ID;
   const url = `https://api.telegram.org/bot${token}/sendPhoto`;
 
   const FormData = require("form-data");
-  const form = new FormData();
-  form.append("chat_id", chatId);
-  form.append("photo", fs.createReadStream(qrPath));
-  form.append("caption", "Vui lòng quét mã QR này bằng Zalo Hotline để đăng nhập hệ thống.");
+  const nodeFetch = require("node-fetch");
+  const fetchFn = nodeFetch.default || nodeFetch;
+  const delays = [3000, 5000, 8000, 12000, 15000];
 
-  try {
-    const nodeFetch = require("node-fetch");
-    const fetchFn = nodeFetch.default || nodeFetch;
-    const response = await fetchFn(url, {
-      method: "POST",
-      body: form,
-      headers: typeof form.getHeaders === "function" ? form.getHeaders() : undefined,
-    });
-    const result = await response.json();
-    if (!result.ok) {
-      console.error("Failed to send Telegram QR:", result);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[TELEGRAM-QR] Đang gửi mã QR đăng nhập tới nhóm Gold Laundry (Lần ${attempt}/${maxRetries})...`);
+      const form = new FormData();
+      form.append("chat_id", chatId);
+      form.append("photo", fs.createReadStream(qrPath));
+      form.append("caption", "🔐 Vui lòng quét mã QR này bằng Zalo Hotline để đăng nhập hệ thống.");
+
+      const response = await fetchFn(url, {
+        method: "POST",
+        body: form,
+        headers: typeof form.getHeaders === "function" ? form.getHeaders() : undefined,
+        timeout: 30000,
+      });
+      const result = await response.json();
+      if (result.ok) {
+        console.log(`[TELEGRAM-QR] ✓ Gửi mã QR thành công (Message ID: ${result.result.message_id})!`);
+        return result;
+      } else {
+        console.error(`[TELEGRAM-QR] Lỗi phản hồi từ Telegram API (Lần ${attempt}):`, result);
+      }
+    } catch (error) {
+      console.error(`[TELEGRAM-QR] Lỗi kết nối gửi mã QR (Lần ${attempt}/${maxRetries}):`, error.message);
     }
-  } catch (error) {
-    console.error("Error sending Telegram QR:", error);
+
+    if (attempt < maxRetries) {
+      const waitMs = delays[attempt - 1] || 5000;
+      console.log(`[TELEGRAM-QR] Chờ ${waitMs / 1000}s trước khi thử lại...`);
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
   }
+
+  console.error(`[TELEGRAM-QR] ❌ Đã thử ${maxRetries} lần nhưng không thể gửi mã QR tới Telegram.`);
+  return null;
 }
 
 async function downloadImage(url, filepath) {
@@ -566,16 +580,17 @@ async function handleAppSheetOrder(data) {
 
   const friendRequestText = `Chào anh/chị, em là quản lý của Gold Laundry. Em xin phép kết nối Zalo để tiện hỗ trợ dịch vụ giặt sấy khi anh/chị cần ạ.`;
 
-  console.log("[BOT-ORDER] Finding Zalo user for phone:", Customer_Phone);
-  const userResult = await zaloClient.findUser(Customer_Phone);
+  const cleanPhone = String(Customer_Phone || "").replace(/[^0-9]/g, "");
+  console.log("[BOT-ORDER] Finding Zalo user for phone:", Customer_Phone, "-> Clean:", cleanPhone);
+  const userResult = await zaloClient.findUser(cleanPhone);
 
   if (!userResult || !userResult.uid) {
-    console.error("[BOT-ORDER] Cannot find user with phone", Customer_Phone);
-    throw new Error("Cannot find user with phone " + Customer_Phone);
+    console.error("[BOT-ORDER] Cannot find user with phone", cleanPhone);
+    throw new Error("Cannot find user with phone " + cleanPhone);
   }
 
   const uid = userResult.uid;
-  console.log("[BOT-ORDER] Found Zalo UID:", uid, "for phone:", Customer_Phone);
+  console.log("[BOT-ORDER] Found Zalo UID:", uid, "for phone:", cleanPhone);
 
   let cleanAmount = 0;
   if (Bill_Amount) {

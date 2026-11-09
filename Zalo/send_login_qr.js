@@ -22,26 +22,44 @@ async function sendTelegramMessage(text) {
   }
 }
 
-async function sendTelegramQR(qrPath) {
-  try {
-    const FormData = require("form-data");
-    const form = new FormData();
-    form.append("chat_id", TELEGRAM_CHAT_ID);
-    form.append("photo", fs.createReadStream(qrPath));
-    form.append("caption", "Vui lòng quét mã QR này bằng Zalo Hotline để đăng nhập hệ thống.");
+async function sendTelegramQR(qrPath, maxRetries = 5) {
+  const FormData = require("form-data");
+  const nodeFetch = require("node-fetch");
+  const fetchFn = nodeFetch.default || nodeFetch;
+  const delays = [3000, 5000, 8000, 12000, 15000];
 
-    const nodeFetch = require("node-fetch");
-    const fetchFn = nodeFetch.default || nodeFetch;
-    const response = await fetchFn(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`, {
-      method: "POST",
-      body: form,
-      headers: typeof form.getHeaders === "function" ? form.getHeaders() : undefined,
-    });
-    const result = await response.json();
-    console.log("Telegram QR send response:", result.ok);
-  } catch (err) {
-    console.error("sendTelegramQR error:", err.message);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[TELEGRAM-QR] Đang gửi mã QR đăng nhập tới nhóm Gold Laundry (Lần ${attempt}/${maxRetries})...`);
+      const form = new FormData();
+      form.append("chat_id", TELEGRAM_CHAT_ID);
+      form.append("photo", fs.createReadStream(qrPath));
+      form.append("caption", "🔐 Vui lòng quét mã QR này bằng Zalo Hotline để đăng nhập hệ thống.");
+
+      const response = await fetchFn(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`, {
+        method: "POST",
+        body: form,
+        headers: typeof form.getHeaders === "function" ? form.getHeaders() : undefined,
+        timeout: 30000,
+      });
+      const result = await response.json();
+      if (result.ok) {
+        console.log(`[TELEGRAM-QR] ✓ Gửi mã QR thành công (Message ID: ${result.result.message_id})!`);
+        return result;
+      } else {
+        console.error(`[TELEGRAM-QR] Lỗi phản hồi từ Telegram API (Lần ${attempt}):`, result);
+      }
+    } catch (err) {
+      console.error(`[TELEGRAM-QR] Lỗi kết nối gửi mã QR (Lần ${attempt}/${maxRetries}):`, err.message);
+    }
+
+    if (attempt < maxRetries) {
+      const waitMs = delays[attempt - 1] || 5000;
+      console.log(`[TELEGRAM-QR] Chờ ${waitMs / 1000}s trước khi thử lại...`);
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
   }
+  return null;
 }
 
 async function main() {
