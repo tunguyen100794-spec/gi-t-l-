@@ -8,7 +8,7 @@ const crypto = require("crypto");
 const puppeteer = require("puppeteer");
 const os = require("os");
 const QRCode = require("qrcode");
-const { execSync } = require("child_process");
+const { execSync, execFile } = require("child_process");
 const birthdayManager = require("./birthday_manager");
 
 
@@ -434,22 +434,9 @@ async function handleSendVipCard({ phone, message, sendImage = true, noImage = f
 }
 
 // ─────────────────────────────────────────────────────────
-// Tạo ảnh receipt đẹp bằng Puppeteer (Gold Laundry style)
+// Tạo mã HTML hóa đơn chuẩn (Gold Laundry style)
 // ─────────────────────────────────────────────────────────
-async function generateReceiptImage(data, qrImagePath, outputPath) {
-  let browser = null;
-  try {
-    browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-      ],
-    });
-    const page = await browser.newPage();
-
+function buildReceiptHtml(data, qrImagePath) {
   let qrBase64 = "";
   if (qrImagePath && fs.existsSync(qrImagePath)) {
     const qrBuffer = fs.readFileSync(qrImagePath);
@@ -482,7 +469,7 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
   let rawAmount = parseInt(String(Bill_Amount || "0").replace(/[^0-9]/g, "")) || 0;
   const formattedAmount = rawAmount.toLocaleString("vi-VN");
 
-  const html = `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -614,23 +601,142 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
   </div>
 </body>
 </html>`;
+}
 
-  await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 15000 });
+// ─────────────────────────────────────────────────────────
+// Tạo ảnh receipt bằng Triple-Engine Renderer:
+// Động cơ 1: Puppeteer (Node.js in-process)
+// Động cơ 2: Microsoft Edge Headless CLI (msedge.exe)
+// Động cơ 3: Google Chrome Headless CLI (chrome.exe)
+// Đảm bảo 100% xuất ra đúng bức ảnh hóa đơn thiết lập sẵn!
+// ─────────────────────────────────────────────────────────
+async function generateReceiptImage(data, qrImagePath, outputPath) {
+  const html = buildReceiptHtml(data, qrImagePath);
+  const hasQr = Boolean(qrImagePath && fs.existsSync(qrImagePath));
+  const cliHeight = hasQr ? 890 : 675;
+
+  // ── ĐỘNG CƠ 1: Puppeteer Node.js (Mặc định) ──
+  console.log("[BOT-ORDER] 📸 Động cơ 1 (Puppeteer): Đang render ảnh hóa đơn...");
+  let engine1Success = false;
+  let browser = null;
   try {
-    await page.evaluateHandle("document.fonts.ready");
-  } catch (fontErr) {}
-  const element = await page.$("#receipt");
-  if (!element) {
-    throw new Error("Không tìm thấy thẻ #receipt trong trang HTML");
-  }
-  await element.screenshot({ path: outputPath, omitBackground: true });
+    browser = await puppeteer.launch({
+      headless: "new",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+      ],
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 15000 });
+    try {
+      await page.evaluateHandle("document.fonts.ready");
+    } catch (fontErr) {}
+    const element = await page.$("#receipt");
+    if (element) {
+      await element.screenshot({ path: outputPath, omitBackground: true });
+      if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 10000) {
+        console.log(`[BOT-ORDER] ✓ Động cơ 1 thành công (${(fs.statSync(outputPath).size / 1024).toFixed(1)} KB)`);
+        engine1Success = true;
+      }
+    }
+  } catch (err1) {
+    console.warn("[BOT-ORDER] ⚠️ Động cơ 1 (Puppeteer) gặp sự cố:", err1.message);
   } finally {
     if (browser) {
+      try { await browser.close(); } catch (e) {}
+    }
+  }
+
+  if (engine1Success) return true;
+
+  // Chuẩn bị file HTML tạm cho Động cơ 2 và Động cơ 3
+  const tempHtmlPath = path.join(os.tmpdir(), `receipt_html_${Date.now()}.html`);
+  try {
+    fs.writeFileSync(tempHtmlPath, html, "utf8");
+
+    // ── ĐỘNG CƠ 2: Microsoft Edge Headless CLI (Dự phòng cấp 1) ──
+    const edgePaths = [
+      "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+    ];
+    const edgeBin = edgePaths.find((p) => fs.existsSync(p));
+
+    if (edgeBin) {
+      console.log("[BOT-ORDER] 🔄 Động cơ 2 (Microsoft Edge CLI): Đang kích hoạt dự phòng...");
       try {
-        await browser.close();
-      } catch (closeErr) {
-        console.error("[BOT-ORDER] Lỗi đóng browser Chrome:", closeErr.message);
+        await new Promise((resolve, reject) => {
+          execFile(
+            edgeBin,
+            [
+              "--headless",
+              "--disable-gpu",
+              "--hide-scrollbars",
+              "--default-background-color=00000000",
+              `--screenshot=${outputPath}`,
+              `--window-size=552,${cliHeight}`,
+              tempHtmlPath,
+            ],
+            { timeout: 8000 },
+            (err) => {
+              if (err) return reject(err);
+              resolve();
+            }
+          );
+        });
+        if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 10000) {
+          console.log(`[BOT-ORDER] ✓ Động cơ 2 (Edge CLI) thành công (${(fs.statSync(outputPath).size / 1024).toFixed(1)} KB)`);
+          return true;
+        }
+      } catch (err2) {
+        console.warn("[BOT-ORDER] ⚠️ Động cơ 2 (Edge CLI) lỗi:", err2.message);
       }
+    }
+
+    // ── ĐỘNG CƠ 3: Google Chrome Headless CLI (Dự phòng cấp 2) ──
+    const chromePaths = [
+      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+    ];
+    const chromeBin = chromePaths.find((p) => fs.existsSync(p));
+
+    if (chromeBin) {
+      console.log("[BOT-ORDER] 🔄 Động cơ 3 (Google Chrome CLI): Đang kích hoạt dự phòng cấp 2...");
+      try {
+        await new Promise((resolve, reject) => {
+          execFile(
+            chromeBin,
+            [
+              "--headless",
+              "--disable-gpu",
+              "--hide-scrollbars",
+              "--default-background-color=00000000",
+              `--screenshot=${outputPath}`,
+              `--window-size=552,${cliHeight}`,
+              tempHtmlPath,
+            ],
+            { timeout: 8000 },
+            (err) => {
+              if (err) return reject(err);
+              resolve();
+            }
+          );
+        });
+        if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 10000) {
+          console.log(`[BOT-ORDER] ✓ Động cơ 3 (Chrome CLI) thành công (${(fs.statSync(outputPath).size / 1024).toFixed(1)} KB)`);
+          return true;
+        }
+      } catch (err3) {
+        console.warn("[BOT-ORDER] ⚠️ Động cơ 3 (Chrome CLI) lỗi:", err3.message);
+      }
+    }
+
+    throw new Error("Cả 3 Động cơ Puppeteer, Edge CLI và Chrome CLI đều không thể tạo ảnh hóa đơn.");
+  } finally {
+    if (fs.existsSync(tempHtmlPath)) {
+      try { fs.unlinkSync(tempHtmlPath); } catch (e) {}
     }
   }
 }
@@ -692,63 +798,42 @@ async function handleAppSheetOrder(data) {
         hasQr ? qrImagePath : null,
         receiptImagePath
       );
-      imageGenerated = fs.existsSync(receiptImagePath);
+      imageGenerated = fs.existsSync(receiptImagePath) && fs.statSync(receiptImagePath).size > 10000;
     } catch (imgErr) {
-      console.error("[BOT-ORDER] Lỗi tạo ảnh hóa đơn lần 1:", imgErr.message, "-> Thử lại lần 2...");
-      try {
-        await new Promise((r) => setTimeout(r, 600));
-        await generateReceiptImage(
-          { Customer_Name, Complete_Date, Bill_Amount, Point, Customer_Phone },
-          hasQr ? qrImagePath : null,
-          receiptImagePath
-        );
-        imageGenerated = fs.existsSync(receiptImagePath);
-      } catch (retryErr) {
-        console.error("[BOT-ORDER] Lỗi tạo ảnh hóa đơn lần 2:", retryErr.message);
-      }
+      console.error("[BOT-ORDER] Lỗi tạo ảnh hóa đơn:", imgErr.message);
     }
 
     console.log("[BOT-ORDER] Sending Zalo message to:", uid);
     if (imageGenerated && fs.existsSync(receiptImagePath)) {
-      await zaloClient.sendMessage({ msg: "", attachments: [receiptImagePath] }, uid);
-
-      // Gửi tin nhắn chữ riêng biệt kêu gọi đăng ký thành viên
+      let sentSuccess = false;
       try {
-        const shortCardUrl = "giatsayquynhon.vn/the";
-        const ctaMessage = `💙 Cảm ơn Quý khách đã sử dụng dịch vụ của chúng tôi!\n\nQuý khách hãy đăng ký thẻ thành viên để tích điểm nhận quà và nhận ngay ưu đãi giặt 7 lần, tặng 1 lần tại:\n👉 ${shortCardUrl}`;
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        console.log("[BOT-ORDER] Sending follow-up VIP card link to:", uid);
-        await zaloClient.sendMessage({ msg: ctaMessage }, uid);
-      } catch (ctaErr) {
-        console.error("[BOT-ORDER] Send follow-up message error:", ctaErr.message);
+        await zaloClient.sendMessage({ msg: "", attachments: [receiptImagePath] }, uid);
+        sentSuccess = true;
+        console.log("[BOT-ORDER] ✓ Đã gửi ảnh hóa đơn thiết lập sẵn thành công tới:", uid);
+      } catch (sendErr) {
+        if (sendErr.message && (sendErr.message.includes("122") || sendErr.message.includes("chặn"))) {
+          console.warn(`[BOT-ORDER] Khách hàng ${uid} chặn tin nhắn từ người lạ (code: 122). Bỏ qua gửi tin nhắn.`);
+        } else {
+          console.error("[BOT-ORDER] Lỗi gửi ảnh hóa đơn:", sendErr.message);
+          throw sendErr;
+        }
+      }
+
+      // Gửi tin nhắn chữ riêng biệt kêu gọi đăng ký thành viên nếu gửi hóa đơn thành công
+      if (sentSuccess) {
+        try {
+          const shortCardUrl = "giatsayquynhon.vn/the";
+          const ctaMessage = `💙 Cảm ơn Quý khách đã sử dụng dịch vụ của chúng tôi!\n\nQuý khách hãy đăng ký thẻ thành viên để tích điểm nhận quà và nhận ngay ưu đãi giặt 7 lần, tặng 1 lần tại:\n👉 ${shortCardUrl}`;
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          console.log("[BOT-ORDER] Sending follow-up VIP card link to:", uid);
+          await zaloClient.sendMessage({ msg: ctaMessage }, uid);
+        } catch (ctaErr) {
+          console.error("[BOT-ORDER] Send follow-up message error:", ctaErr.message);
+        }
       }
     } else {
-      // ─────────────────────────────────────────────────────────
-      // FALLBACK: Tự động gửi tin nhắn văn bản chi tiết nếu lỗi ảnh
-      // Đảm bảo khách hàng luôn nhận được đầy đủ thông tin thanh toán!
-      // ─────────────────────────────────────────────────────────
-      console.warn("[BOT-ORDER] ⚠️ Không thể tạo ảnh hóa đơn! Kích hoạt luồng Fallback gửi tin nhắn chữ tới:", uid);
-      const formattedAmt = cleanAmount ? parseInt(cleanAmount).toLocaleString("vi-VN") : "0";
-      const displayName = cleanCustomerName(Customer_Name) || "Quý khách";
-
-      let fallbackMessage = `🧺 GIẶT SẤY GOLD LAUNDRY - THÔNG BÁO HOÀN THÀNH\n` +
-        `Kính chào Quý khách ${displayName},\n` +
-        `Đơn hàng giặt sấy của Quý khách đã hoàn thành và sẵn sàng giao/nhận!\n\n` +
-        `💵 Tổng thanh toán: ${formattedAmt}đ\n` +
-        `⭐ Điểm tích lũy: ${Point || 0} điểm\n` +
-        (Complete_Date ? `⏰ Thời gian hoàn thành: ${Complete_Date}\n\n` : `\n`) +
-        `💳 THÔNG TIN CHUYỂN KHOẢN:\n` +
-        `• Ngân hàng: MB Bank\n` +
-        `• Số TK: 0394135248\n` +
-        `• Chủ TK: LE THI DIEU MANH\n` +
-        `• Nội dung: ${addInfoString}\n` +
-        `👉 Link quét mã VietQR: ${qrUrl}\n\n` +
-        `📦 Hướng dẫn nhận đồ: Quý khách ghé trực tiếp tiệm hoặc nhắn lại tin nhắn này để được giao tận nơi.\n\n` +
-        `👉 Đăng ký thẻ thành viên để nhận ưu đãi Giặt 7 lần tặng 1 lần:\nhttps://giatsayquynhon.vn/the\n\n` +
-        `Gold Laundry trân trọng cảm ơn Quý khách!`;
-
-      await zaloClient.sendMessage({ msg: fallbackMessage }, uid);
-      console.log("[BOT-ORDER] ✓ Đã gửi tin nhắn văn bản Fallback thành công tới:", uid);
+      console.error("[BOT-ORDER] ❌ Không thể tạo ảnh hóa đơn sau cả 3 động cơ. Tuyệt đối không gửi tin nhắn chữ theo yêu cầu của tiệm!");
+      throw new Error("Không thể tạo ảnh hóa đơn thiết lập sẵn cho khách hàng " + uid);
     }
   } finally {
     if (fs.existsSync(receiptImagePath)) {
