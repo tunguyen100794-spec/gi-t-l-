@@ -130,6 +130,48 @@ function enqueueTask(taskFn) {
 }
 
 // ─────────────────────────────────────────────────────────
+// Bộ đệm chống gửi trùng lặp Webhook đơn hàng AppSheet (TTL 10 phút)
+// ─────────────────────────────────────────────────────────
+const orderDeduplicationCache = new Map();
+const ORDER_DEDUP_TTL_MS = 10 * 60 * 1000;
+
+function getOrderDedupKey(data) {
+  if (!data) return "";
+  const cleanPhone = String(data.Customer_Phone || "").replace(/[^0-9]/g, "");
+  const cleanAmount = String(data.Bill_Amount || "").replace(/[^0-9]/g, "");
+  const orderId = String(data.Row_ID || data.ID || data.Order_ID || data.Invoice_ID || "").trim();
+  const dateStr = String(data.Complete_Date || "").trim();
+  const nameStr = String(data.Customer_Name || "").trim();
+  return `${cleanPhone}_${cleanAmount}_${orderId || dateStr || nameStr}`;
+}
+
+function isOrderDuplicate(data) {
+  const dedupKey = getOrderDedupKey(data);
+  if (!dedupKey) return false;
+
+  const now = Date.now();
+  // Dọn dẹp cache quá hạn
+  for (const [key, timestamp] of orderDeduplicationCache.entries()) {
+    if (now - timestamp > ORDER_DEDUP_TTL_MS) {
+      orderDeduplicationCache.delete(key);
+    }
+  }
+
+  if (orderDeduplicationCache.has(dedupKey)) {
+    return true;
+  }
+  orderDeduplicationCache.set(dedupKey, now);
+  return false;
+}
+
+function clearOrderDedup(data) {
+  const dedupKey = getOrderDedupKey(data);
+  if (dedupKey) {
+    orderDeduplicationCache.delete(dedupKey);
+  }
+}
+
+// ─────────────────────────────────────────────────────────
 // Thông báo Telegram (Auto-Retry 5 lần chống rớt mạng)
 // ─────────────────────────────────────────────────────────
 // Cấu hình Telegram mặc định: Nhóm Gold Laundry
@@ -395,8 +437,18 @@ async function handleSendVipCard({ phone, message, sendImage = true, noImage = f
 // Tạo ảnh receipt đẹp bằng Puppeteer (Gold Laundry style)
 // ─────────────────────────────────────────────────────────
 async function generateReceiptImage(data, qrImagePath, outputPath) {
-  const browser = await puppeteer.launch({ args: ["--no-sandbox"] });
-  const page = await browser.newPage();
+  let browser = null;
+  try {
+    browser = await puppeteer.launch({
+      headless: "new",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+      ],
+    });
+    const page = await browser.newPage();
 
   let qrBase64 = "";
   if (qrImagePath && fs.existsSync(qrImagePath)) {
@@ -568,8 +620,19 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
     await page.evaluateHandle("document.fonts.ready");
   } catch (fontErr) {}
   const element = await page.$("#receipt");
+  if (!element) {
+    throw new Error("Không tìm thấy thẻ #receipt trong trang HTML");
+  }
   await element.screenshot({ path: outputPath, omitBackground: true });
-  await browser.close();
+  } finally {
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeErr) {
+        console.error("[BOT-ORDER] Lỗi đóng browser Chrome:", closeErr.message);
+      }
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────
@@ -622,18 +685,31 @@ async function handleAppSheetOrder(data) {
       console.error("[BOT-ORDER] Failed to download QR code:", err);
     }
 
+    let imageGenerated = false;
     try {
       await generateReceiptImage(
         { Customer_Name, Complete_Date, Bill_Amount, Point, Customer_Phone },
         hasQr ? qrImagePath : null,
         receiptImagePath
       );
+      imageGenerated = fs.existsSync(receiptImagePath);
     } catch (imgErr) {
-      console.error("[BOT-ORDER] Failed to generate receipt image:", imgErr);
+      console.error("[BOT-ORDER] Lỗi tạo ảnh hóa đơn lần 1:", imgErr.message, "-> Thử lại lần 2...");
+      try {
+        await new Promise((r) => setTimeout(r, 600));
+        await generateReceiptImage(
+          { Customer_Name, Complete_Date, Bill_Amount, Point, Customer_Phone },
+          hasQr ? qrImagePath : null,
+          receiptImagePath
+        );
+        imageGenerated = fs.existsSync(receiptImagePath);
+      } catch (retryErr) {
+        console.error("[BOT-ORDER] Lỗi tạo ảnh hóa đơn lần 2:", retryErr.message);
+      }
     }
 
     console.log("[BOT-ORDER] Sending Zalo message to:", uid);
-    if (fs.existsSync(receiptImagePath)) {
+    if (imageGenerated && fs.existsSync(receiptImagePath)) {
       await zaloClient.sendMessage({ msg: "", attachments: [receiptImagePath] }, uid);
 
       // Gửi tin nhắn chữ riêng biệt kêu gọi đăng ký thành viên
@@ -646,6 +722,33 @@ async function handleAppSheetOrder(data) {
       } catch (ctaErr) {
         console.error("[BOT-ORDER] Send follow-up message error:", ctaErr.message);
       }
+    } else {
+      // ─────────────────────────────────────────────────────────
+      // FALLBACK: Tự động gửi tin nhắn văn bản chi tiết nếu lỗi ảnh
+      // Đảm bảo khách hàng luôn nhận được đầy đủ thông tin thanh toán!
+      // ─────────────────────────────────────────────────────────
+      console.warn("[BOT-ORDER] ⚠️ Không thể tạo ảnh hóa đơn! Kích hoạt luồng Fallback gửi tin nhắn chữ tới:", uid);
+      const formattedAmt = cleanAmount ? parseInt(cleanAmount).toLocaleString("vi-VN") : "0";
+      const displayName = cleanCustomerName(Customer_Name) || "Quý khách";
+
+      let fallbackMessage = `🧺 GIẶT SẤY GOLD LAUNDRY - THÔNG BÁO HOÀN THÀNH\n` +
+        `Kính chào Quý khách ${displayName},\n` +
+        `Đơn hàng giặt sấy của Quý khách đã hoàn thành và sẵn sàng giao/nhận!\n\n` +
+        `💵 Tổng thanh toán: ${formattedAmt}đ\n` +
+        `⭐ Điểm tích lũy: ${Point || 0} điểm\n` +
+        (Complete_Date ? `⏰ Thời gian hoàn thành: ${Complete_Date}\n\n` : `\n`) +
+        `💳 THÔNG TIN CHUYỂN KHOẢN:\n` +
+        `• Ngân hàng: MB Bank\n` +
+        `• Số TK: 0394135248\n` +
+        `• Chủ TK: LE THI DIEU MANH\n` +
+        `• Nội dung: ${addInfoString}\n` +
+        `👉 Link quét mã VietQR: ${qrUrl}\n\n` +
+        `📦 Hướng dẫn nhận đồ: Quý khách ghé trực tiếp tiệm hoặc nhắn lại tin nhắn này để được giao tận nơi.\n\n` +
+        `👉 Đăng ký thẻ thành viên để nhận ưu đãi Giặt 7 lần tặng 1 lần:\nhttps://giatsayquynhon.vn/the\n\n` +
+        `Gold Laundry trân trọng cảm ơn Quý khách!`;
+
+      await zaloClient.sendMessage({ msg: fallbackMessage }, uid);
+      console.log("[BOT-ORDER] ✓ Đã gửi tin nhắn văn bản Fallback thành công tới:", uid);
     }
   } finally {
     if (fs.existsSync(receiptImagePath)) {
@@ -867,10 +970,21 @@ app.post("/webhook/zalo", async (req, res) => {
     return res.status(400).json({ ok: false, error: "Missing Customer_Phone" });
   }
 
+  // Chống gửi trùng lặp (Deduplication) từ AppSheet Retry
+  if (isOrderDuplicate(req.body)) {
+    console.warn(`[WEBHOOK-ORDER] ⚠️ Bỏ qua webhook trùng lặp cho SĐT ${Customer_Phone} (đơn vừa được tiếp nhận trong 10 phút).`);
+    return res.json({
+      ok: true,
+      duplicated: true,
+      message: `Đơn hàng của SĐT ${Customer_Phone} đã được tiếp nhận trước đó, tránh gửi lặp.`
+    });
+  }
+
   try {
     await enqueueTask(() => handleAppSheetOrder(req.body));
     res.json({ ok: true, message: "Zalo message sent successfully to " + Customer_Phone });
   } catch (e) {
+    clearOrderDedup(req.body);
     console.error("Zalo webhook error:", e);
     const errorMsg = e.message ? e.message.toLowerCase() : "";
     if (
