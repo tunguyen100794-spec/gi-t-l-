@@ -479,43 +479,43 @@ function buildReceiptHtml(data, qrImagePath) {
     body { font-family:'Be Vietnam Pro','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif; background:transparent; width:550px; }
     .card { width:550px; background:#f0f5ff; border-radius:24px; overflow:hidden; box-shadow:0 14px 44px rgba(0,35,130,0.18); border:1.5px solid #d4e3fc; }
     
-    .header-img { width:100%; height:232px; object-fit:cover; display:block; }
+    .header-img { width:100%; height:228px; object-fit:cover; display:block; }
     
-    .status-wrap { text-align:center; margin-top:3px; margin-bottom:2px; padding:0 14px; }
-    .status-img { width:100%; max-width:430px; display:block; margin:0 auto; }
+    .status-wrap { text-align:center; margin-top:2px; margin-bottom:2px; padding:0 14px; }
+    .status-img { width:100%; max-width:420px; display:block; margin:0 auto; }
     
-    .body { padding:4px 14px 10px; display:flex; flex-direction:column; gap:6px; }
+    .body { padding:4px 14px 8px; display:flex; flex-direction:column; gap:6px; }
     
-    .wcard { background:white; border-radius:14px; border:1.5px solid #e0e8f8; padding:8px 14px; box-shadow:0 2px 8px rgba(0,40,160,0.04); }
+    .wcard { background:white; border-radius:14px; border:1.5px solid #e0e8f8; padding:7px 14px; box-shadow:0 2px 8px rgba(0,40,160,0.04); }
     
-    .cust-row { display:flex; align-items:center; gap:14px; padding:9px 16px; }
-    .cust-avatar { width:46px; height:46px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#0d5bd7,#258cfb); display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(13,91,215,0.3); }
-    .cust-info { display:flex; flex-direction:column; gap:2px; }
-    .cust-name { font-size:22px; font-weight:900; color:#0d1b3e; line-height:1.2; }
-    .cust-phone { color:#475569; font-size:15px; font-weight:600; display:flex; align-items:center; gap:5px; }
+    .cust-row { display:flex; align-items:center; gap:12px; padding:8px 14px; }
+    .cust-avatar { width:44px; height:44px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#0d5bd7,#258cfb); display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(13,91,215,0.3); }
+    .cust-info { display:flex; flex-direction:column; gap:1px; }
+    .cust-name { font-size:21px; font-weight:900; color:#0d1b3e; line-height:1.2; }
+    .cust-phone { color:#475569; font-size:14.5px; font-weight:600; display:flex; align-items:center; gap:5px; }
     
-    .info-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid #edf2fb; font-size:13.5px; }
+    .info-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #edf2fb; font-size:13px; }
     .info-row:last-child { border-bottom:none; }
     .info-lbl { color:#475569; display:flex; align-items:center; gap:8px; font-weight:500; }
-    .info-val { font-size:14.5px; font-weight:700; color:#0d5bd7; }
+    .info-val { font-size:14px; font-weight:700; color:#0d5bd7; }
     
-    .total-card { background:linear-gradient(90deg,#0d5bd7 0%,#1570ef 100%); border-radius:14px; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 6px 18px rgba(13,91,215,0.32); }
+    .total-card { background:linear-gradient(90deg,#0d5bd7 0%,#1570ef 100%); border-radius:14px; padding:8px 16px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 6px 18px rgba(13,91,215,0.32); }
     .total-left { display:flex; align-items:center; gap:10px; }
-    .total-coin { width:48px; height:44px; object-fit:contain; }
-    .total-lbl { font-size:14px; font-weight:800; color:rgba(255,255,255,0.95); text-transform:uppercase; letter-spacing:0.5px; }
-    .total-amt { font-size:44px; font-weight:900; color:#ffd740; line-height:1; text-shadow:0 2px 10px rgba(0,0,0,0.3); display:inline-flex; align-items:baseline; }
-    .total-curr { font-size:24px; font-weight:800; color:#ffd740; margin-left:4px; }
+    .total-coin { width:46px; height:42px; object-fit:contain; }
+    .total-lbl { font-size:13.5px; font-weight:800; color:rgba(255,255,255,0.95); text-transform:uppercase; letter-spacing:0.5px; }
+    .total-amt { font-size:42px; font-weight:900; color:#ffd740; line-height:1; text-shadow:0 2px 10px rgba(0,0,0,0.3); display:inline-flex; align-items:baseline; }
+    .total-curr { font-size:23px; font-weight:800; color:#ffd740; margin-left:4px; }
     
-    .notice-card { background:#fffbe6; border:1.5px solid #ffe58f; border-radius:12px; padding:7px 12px; box-shadow:0 2px 6px rgba(245,158,11,0.06); display:flex; gap:8px; align-items:flex-start; }
-    .notice-icon { font-size:17px; line-height:1; }
+    .notice-card { background:#fffbe6; border:1.5px solid #ffe58f; border-radius:12px; padding:6px 12px; box-shadow:0 2px 6px rgba(245,158,11,0.06); display:flex; gap:8px; align-items:flex-start; }
+    .notice-icon { font-size:16px; line-height:1; }
     .notice-content { flex:1; }
-    .notice-title { font-size:12.5px; font-weight:800; color:#0f358a; margin-bottom:1px; }
-    .notice-text { font-size:11.5px; color:#475569; line-height:1.4; font-weight:500; }
+    .notice-title { font-size:12px; font-weight:800; color:#0f358a; margin-bottom:1px; }
+    .notice-text { font-size:11px; color:#475569; line-height:1.35; font-weight:500; }
     
-    .pay-card { background:white; border-radius:13px; border:1.5px solid #e0e8f8; padding:7px 12px; text-align:center; box-shadow:0 2px 8px rgba(0,40,160,0.04); }
-    .pay-title { font-size:12px; font-weight:800; color:#0f358a; text-transform:uppercase; letter-spacing:0.8px; display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:4px; }
-    .qr-wrap { display:inline-flex; padding:4px; background:white; border-radius:10px; border:1.5px solid #e2ebfa; box-shadow:0 3px 10px rgba(0,0,0,0.06); margin-bottom:4px; }
-    .qr-wrap img { width:135px; height:135px; display:block; border-radius:6px; }
+    .pay-card { background:white; border-radius:14px; border:1.5px solid #e0e8f8; padding:8px 14px; text-align:center; box-shadow:0 2px 8px rgba(0,40,160,0.04); }
+    .pay-title { font-size:12px; font-weight:800; color:#0f358a; text-transform:uppercase; letter-spacing:0.8px; display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:5px; }
+    .qr-wrap { display:inline-flex; padding:5px; background:white; border-radius:12px; border:2px solid #d4e3fc; box-shadow:0 4px 14px rgba(13,91,215,0.1); margin-bottom:5px; }
+    .qr-wrap img { width:168px; height:168px; display:block; border-radius:8px; }
     .chips { display:flex; justify-content:center; gap:6px; }
     .chip { background:#eef4ff; border:1px solid #c8dcfc; padding:2px 10px; border-radius:16px; font-size:11px; font-weight:700; color:#0d5bd7; }
     
@@ -630,6 +630,7 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
       ],
     });
     const page = await browser.newPage();
+    await page.setViewport({ width: 550, height: 1000, deviceScaleFactor: 2 });
     await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 15000 });
     try {
       await page.evaluateHandle("document.fonts.ready");
@@ -674,6 +675,7 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
               "--headless",
               "--disable-gpu",
               "--hide-scrollbars",
+              "--force-device-scale-factor=2",
               "--default-background-color=00000000",
               `--screenshot=${outputPath}`,
               `--window-size=552,${cliHeight}`,
@@ -712,6 +714,7 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
               "--headless",
               "--disable-gpu",
               "--hide-scrollbars",
+              "--force-device-scale-factor=2",
               "--default-background-color=00000000",
               `--screenshot=${outputPath}`,
               `--window-size=552,${cliHeight}`,
@@ -768,13 +771,12 @@ async function handleAppSheetOrder(data) {
 
   const qrImagePath = path.join(os.tmpdir(), `qr_pay_${Date.now()}.png`);
 
-  let cleanName = removeVietnameseTones(Customer_Name || "");
-  cleanName = cleanName.replace(/[^a-zA-Z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-
-  let addInfoString = cleanName ? `${cleanName} chuyen khoan` : `chuyen khoan ${Customer_Phone}`;
-  if (addInfoString.length > 50) {
-    addInfoString = addInfoString.substring(0, 50);
-  }
+  let cleanName = cleanCustomerName(Customer_Name);
+  cleanName = removeVietnameseTones(cleanName).replace(/[^a-zA-Z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  const nameParts = cleanName.split(" ");
+  const shortName = nameParts.slice(0, 3).join(" ");
+  const phoneSuffix = cleanPhone ? String(cleanPhone).slice(-4) : "";
+  const addInfoString = `${shortName} ${phoneSuffix} chuyen khoan`.trim().slice(0, 35);
   const addInfo = encodeURIComponent(addInfoString);
 
   const qrUrl = `https://img.vietqr.io/image/MB-0394135248-compact.png?amount=${cleanAmount}&addInfo=${addInfo}&accountName=LE%20THI%20DIEU%20MANH`;
@@ -786,6 +788,13 @@ async function handleAppSheetOrder(data) {
   try {
     try {
       await downloadImage(qrUrl, qrImagePath);
+      if (fs.existsSync(qrImagePath)) {
+        let qrContent = fs.readFileSync(qrImagePath, "utf8");
+        if (qrContent.includes('viewBox="0 0 540 540"')) {
+          qrContent = qrContent.replace('viewBox="0 0 540 540"', 'viewBox="84 86 372 372"');
+          fs.writeFileSync(qrImagePath, qrContent, "utf8");
+        }
+      }
       hasQr = true;
     } catch (err) {
       console.error("[BOT-ORDER] Failed to download QR code:", err);
