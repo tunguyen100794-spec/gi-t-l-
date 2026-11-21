@@ -111,6 +111,7 @@ function buildReceiptHTML(data) {
         )}`
       : "";
   const total = String(data.total || "0").trim();
+  const notes = String(data.Notes || data.notes || data.note || "").trim();
 
   return `
 <!doctype html>
@@ -143,6 +144,8 @@ function buildReceiptHTML(data) {
   td.price{width:120px;text-align:right;padding-right:6px;}
   td.amount{width:150px;text-align:right;}
   .total{font-size:33px;font-weight:950;margin-top:6px;display:flex;justify-content:space-between;}
+  .notes-section{margin-top:8px;font-size:26px;font-weight:700;line-height:1.25;word-break:break-word;white-space:pre-wrap;}
+  .notes-label{font-weight:900;text-decoration:underline;}
   .thanks{font-size:27px;margin-top:8px;font-weight:750;}
   .min-padding{flex:1;}
 </style>
@@ -190,6 +193,12 @@ function buildReceiptHTML(data) {
       <div>Tổng tiền:</div>
       <div class="right">${escapeHtml(total)} đ</div>
     </div>
+    ${notes ? `
+    <hr/>
+    <div class="notes-section">
+      <span class="notes-label">Ghi chú:</span> ${escapeHtml(notes)}
+    </div>
+    ` : ""}
     <div class="min-padding"></div>
     <div class="center thanks">Cảm ơn quý khách! 😊</div>
   </div>
@@ -209,6 +218,7 @@ function buildRequestTicketHTML(data) {
   const customer = String(data.customer || "");
   const phone = String(data.phone || "");
   const desc = String(data.description || "");
+  const notes = String(data.Notes || data.notes || data.note || "").trim();
 
   return `
 <!doctype html>
@@ -256,6 +266,11 @@ function buildRequestTicketHTML(data) {
     <hr/>
     <div class="boxTitle">Nội dung yêu cầu:</div>
     <div class="desc">${escapeHtml(desc || "(Trống)")}</div>
+    ${notes ? `
+    <hr/>
+    <div class="boxTitle">Ghi chú:</div>
+    <div class="desc">${escapeHtml(notes)}</div>
+    ` : ""}
     <hr/>
     <div class="center thanks">Cảm ơn quý khách!</div>
   </div>
