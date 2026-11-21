@@ -10,6 +10,7 @@ const os = require("os");
 const QRCode = require("qrcode");
 const { execSync, execFile } = require("child_process");
 const birthdayManager = require("./birthday_manager");
+const reconcileEngine = require("./reconcile_engine");
 
 
 function cleanCustomerName(name) {
@@ -137,12 +138,24 @@ const ORDER_DEDUP_TTL_MS = 10 * 60 * 1000;
 
 function getOrderDedupKey(data) {
   if (!data) return "";
+  const invoiceIdRaw =
+    data["Số hóa đơn"] ||
+    data.Invoice_ID ||
+    data.Order_ID ||
+    data.Order_Code ||
+    data.Ma_Don ||
+    data.ID ||
+    data.Row_ID ||
+    "";
+  const cleanInvoiceId = String(invoiceIdRaw).replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  if (cleanInvoiceId) {
+    return `INV_${cleanInvoiceId}`;
+  }
   const cleanPhone = String(data.Customer_Phone || "").replace(/[^0-9]/g, "");
   const cleanAmount = String(data.Bill_Amount || "").replace(/[^0-9]/g, "");
-  const orderId = String(data.Row_ID || data.ID || data.Order_ID || data.Invoice_ID || "").trim();
   const dateStr = String(data.Complete_Date || "").trim();
   const nameStr = String(data.Customer_Name || "").trim();
-  return `${cleanPhone}_${cleanAmount}_${orderId || dateStr || nameStr}`;
+  return `${cleanPhone}_${cleanAmount}_${dateStr || nameStr}`;
 }
 
 function isOrderDuplicate(data) {
@@ -460,7 +473,7 @@ function buildReceiptHtml(data, qrImagePath) {
     ? `data:image/png;base64,${fs.readFileSync(FOOTER_PATH).toString("base64")}`
     : "";
 
-  const { Customer_Name, Complete_Date, Bill_Amount, Point, Customer_Phone } = data;
+  const { Customer_Name, Complete_Date, Bill_Amount, Point, Customer_Phone, cleanInvoiceId } = data;
   let cleanName = cleanCustomerName(Customer_Name);
   if (!cleanName || cleanName === Customer_Phone) {
     cleanName = "Quý khách";
@@ -518,6 +531,7 @@ function buildReceiptHtml(data, qrImagePath) {
     .qr-wrap img { width:168px; height:168px; display:block; border-radius:8px; }
     .chips { display:flex; justify-content:center; gap:6px; }
     .chip { background:#eef4ff; border:1px solid #c8dcfc; padding:2px 10px; border-radius:16px; font-size:11px; font-weight:700; color:#0d5bd7; }
+    .qr-hint { margin-top:5px; font-size:10.5px; font-weight:600; color:#64748b; line-height:1.3; }
     
     .footer-img { width:100%; height:75px; object-fit:cover; display:block; margin-top:-2px; }
   </style>
@@ -544,6 +558,18 @@ function buildReceiptHtml(data, qrImagePath) {
       </div>
       
       <div class="wcard" style="padding:2px 14px;">
+        ${
+          cleanInvoiceId
+            ? `
+        <div class="info-row">
+          <span class="info-lbl">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Số hóa đơn
+          </span>
+          <span class="info-val" style="font-size:14.5px; font-weight:800; color:#0d5bd7; letter-spacing:0.5px;">#${cleanInvoiceId}</span>
+        </div>`
+            : ""
+        }
         <div class="info-row">
           <span class="info-lbl">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -592,6 +618,7 @@ function buildReceiptHtml(data, qrImagePath) {
           <span class="chip">0394135248</span>
           <span class="chip">LE THI DIEU MANH</span>
         </div>
+        <div class="qr-hint">💡 Vui lòng giữ nguyên nội dung chuyển khoản để đơn được xác nhận tự động</div>
       </div>`
           : ""
       }
@@ -613,7 +640,7 @@ function buildReceiptHtml(data, qrImagePath) {
 async function generateReceiptImage(data, qrImagePath, outputPath) {
   const html = buildReceiptHtml(data, qrImagePath);
   const hasQr = Boolean(qrImagePath && fs.existsSync(qrImagePath));
-  const cliHeight = hasQr ? 890 : 675;
+  const cliHeight = hasQr ? (data && data.cleanInvoiceId ? 925 : 890) : 675;
 
   // ── ĐỘNG CƠ 1: Puppeteer Node.js (Mặc định) ──
   console.log("[BOT-ORDER] 📸 Động cơ 1 (Puppeteer): Đang render ảnh hóa đơn...");
@@ -630,7 +657,7 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
       ],
     });
     const page = await browser.newPage();
-    await page.setViewport({ width: 550, height: 1000, deviceScaleFactor: 2 });
+    await page.setViewport({ width: 550, height: 1050, deviceScaleFactor: 2 });
     await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 15000 });
     try {
       await page.evaluateHandle("document.fonts.ready");
@@ -750,6 +777,18 @@ async function generateReceiptImage(data, qrImagePath, outputPath) {
 async function handleAppSheetOrder(data) {
   const { Customer_Phone, Customer_Name, Complete_Date, Bill_Amount, Point } = data;
 
+  // Trích xuất Số hóa đơn / Invoice_ID linh hoạt từ AppSheet Webhook
+  const invoiceIdRaw =
+    data["Số hóa đơn"] ||
+    data.Invoice_ID ||
+    data.Order_ID ||
+    data.Order_Code ||
+    data.Ma_Don ||
+    data.ID ||
+    data.Row_ID ||
+    "";
+  const cleanInvoiceId = String(invoiceIdRaw).replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+
   const friendRequestText = `Chào anh/chị, em là quản lý của Gold Laundry. Em xin phép kết nối Zalo để tiện hỗ trợ dịch vụ giặt sấy khi anh/chị cần ạ.`;
 
   const cleanPhone = String(Customer_Phone || "").replace(/[^0-9]/g, "");
@@ -771,17 +810,24 @@ async function handleAppSheetOrder(data) {
 
   const qrImagePath = path.join(os.tmpdir(), `qr_pay_${Date.now()}.png`);
 
-  let cleanName = cleanCustomerName(Customer_Name);
-  cleanName = removeVietnameseTones(cleanName).replace(/[^a-zA-Z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-  const nameParts = cleanName.split(" ");
-  const shortName = nameParts.slice(0, 3).join(" ");
-  const phoneSuffix = cleanPhone ? String(cleanPhone).slice(-4) : "";
-  const addInfoString = `${shortName} ${phoneSuffix} chuyen khoan`.trim().slice(0, 35);
+  let addInfoString = "";
+  if (cleanInvoiceId) {
+    // Chuẩn hóa đồng nhất 100% với AppSheet
+    addInfoString = cleanInvoiceId.slice(0, 30);
+  } else {
+    // Fallback an toàn bảo toàn chức năng cũ nếu chưa có mã đơn
+    let cleanName = cleanCustomerName(Customer_Name);
+    cleanName = removeVietnameseTones(cleanName).replace(/[^a-zA-Z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+    const nameParts = cleanName.split(" ");
+    const shortName = nameParts.slice(0, 3).join(" ");
+    const phoneSuffix = cleanPhone ? String(cleanPhone).slice(-4) : "";
+    addInfoString = `${shortName} ${phoneSuffix} chuyen khoan`.trim().slice(0, 35);
+  }
   const addInfo = encodeURIComponent(addInfoString);
 
   const qrUrl = `https://img.vietqr.io/image/MB-0394135248-compact.png?amount=${cleanAmount}&addInfo=${addInfo}&accountName=LE%20THI%20DIEU%20MANH`;
 
-  console.log("[BOT-ORDER] Downloading QR code from:", qrUrl);
+  console.log("[BOT-ORDER] Downloading QR code with addInfo:", addInfoString, "URL:", qrUrl);
   let hasQr = false;
   const receiptImagePath = path.join(os.tmpdir(), `receipt_${Date.now()}.png`);
 
@@ -803,7 +849,7 @@ async function handleAppSheetOrder(data) {
     let imageGenerated = false;
     try {
       await generateReceiptImage(
-        { Customer_Name, Complete_Date, Bill_Amount, Point, Customer_Phone },
+        { Customer_Name, Complete_Date, Bill_Amount, Point, Customer_Phone, cleanInvoiceId },
         hasQr ? qrImagePath : null,
         receiptImagePath
       );
@@ -1186,6 +1232,37 @@ app.post("/api/birthday/resend-report", async (req, res) => {
     const teleRes = await sendTelegramMessage(teleMsg);
 
     res.json({ ok: !!teleRes, message: teleRes ? "Đã gửi báo cáo Telegram thành công" : "Gửi thất bại sau 5 lần thử", telegram: teleRes });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────
+// 6. Endpoint Đối Soát Giao Dịch Chuyển Khoản Ngân Hàng (Multi-layer Reconciliation)
+// ─────────────────────────────────────────────────────────
+// 6.1 Đối soát 1 giao dịch đơn lẻ
+app.post("/api/reconcile", (req, res) => {
+  try {
+    const { transaction, pendingOrders } = req.body || {};
+    if (!transaction) {
+      return res.status(400).json({ ok: false, error: "Missing transaction data" });
+    }
+    const result = reconcileEngine.reconcileBankTransaction(transaction, pendingOrders || []);
+    res.json({ ok: true, result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// 6.2 Đối soát danh sách giao dịch ngân hàng hàng loạt (Batch Reconciliation)
+app.post("/api/reconcile/batch", (req, res) => {
+  try {
+    const { transactions, pendingOrders } = req.body || {};
+    if (!Array.isArray(transactions)) {
+      return res.status(400).json({ ok: false, error: "transactions must be an array" });
+    }
+    const report = reconcileEngine.batchReconcile(transactions, pendingOrders || []);
+    res.json({ ok: true, report });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }
