@@ -1105,6 +1105,8 @@ app.post("/webhook/zalo", async (req, res) => {
     return res.status(500).json({ ok: false, error: "Zalo client is not ready yet" });
   }
 
+  console.log("[WEBHOOK-ORDER] 📦 Dữ liệu thực tế từ AppSheet:", JSON.stringify(req.body));
+
   const { Customer_Phone } = req.body || {};
   if (!Customer_Phone) {
     return res.status(400).json({ ok: false, error: "Missing Customer_Phone" });
