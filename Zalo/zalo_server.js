@@ -1141,6 +1141,13 @@ app.post("/webhook/zalo", async (req, res) => {
     clearOrderDedup(req.body);
     console.error("Zalo webhook error:", e);
     const errorMsg = e.message ? e.message.toLowerCase() : "";
+
+    // Xử lý trường hợp khách hàng không có Zalo (code 216) -> Không để AppSheet retry nhiều lần
+    if (e.code === 216 || errorMsg.includes("không hợp lệ") || errorMsg.includes("cannot find user")) {
+      console.warn(`[WEBHOOK-ORDER] ⚠️ Khách hàng ${Customer_Phone} không có tài khoản Zalo (code: 216). Bỏ qua gửi tin nhắn.`);
+      return res.json({ ok: false, error: "Customer does not have Zalo account", code: 216 });
+    }
+
     if (
       errorMsg.includes("not logged in") ||
       errorMsg.includes("session") ||
