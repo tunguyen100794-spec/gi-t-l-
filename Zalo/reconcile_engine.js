@@ -10,6 +10,8 @@
 function normalizeOrder(order) {
   if (!order) return null;
   const invoiceIdRaw =
+    order.Invoice_Number ||
+    order.invoice_number ||
     order["Số hóa đơn"] ||
     order.Invoice_ID ||
     order.Order_ID ||

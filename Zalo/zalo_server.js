@@ -139,6 +139,8 @@ const ORDER_DEDUP_TTL_MS = 10 * 60 * 1000;
 function getOrderDedupKey(data) {
   if (!data) return "";
   const invoiceIdRaw =
+    data.Invoice_Number ||
+    data.invoice_number ||
     data["Số hóa đơn"] ||
     data.Invoice_ID ||
     data.Order_ID ||
@@ -564,7 +566,7 @@ function buildReceiptHtml(data, qrImagePath) {
         <div class="info-row">
           <span class="info-lbl">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            Số hóa đơn
+            Số HĐ
           </span>
           <span class="info-val" style="font-size:14.5px; font-weight:800; color:#0d5bd7; letter-spacing:0.5px;">#${cleanInvoiceId}</span>
         </div>`
@@ -617,6 +619,7 @@ function buildReceiptHtml(data, qrImagePath) {
           <span class="chip">MB</span>
           <span class="chip">0394135248</span>
           <span class="chip">LE THI DIEU MANH</span>
+          ${cleanInvoiceId ? `<span class="chip" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">ND: ${cleanInvoiceId}</span>` : ""}
         </div>
         <div class="qr-hint">💡 Vui lòng giữ nguyên nội dung chuyển khoản để đơn được xác nhận tự động</div>
       </div>`
@@ -640,7 +643,7 @@ function buildReceiptHtml(data, qrImagePath) {
 async function generateReceiptImage(data, qrImagePath, outputPath) {
   const html = buildReceiptHtml(data, qrImagePath);
   const hasQr = Boolean(qrImagePath && fs.existsSync(qrImagePath));
-  const cliHeight = hasQr ? (data && data.cleanInvoiceId ? 925 : 890) : 675;
+  const cliHeight = hasQr ? (data && data.cleanInvoiceId ? 940 : 890) : 675;
 
   // ── ĐỘNG CƠ 1: Puppeteer Node.js (Mặc định) ──
   console.log("[BOT-ORDER] 📸 Động cơ 1 (Puppeteer): Đang render ảnh hóa đơn...");
@@ -779,6 +782,8 @@ async function handleAppSheetOrder(data) {
 
   // Trích xuất Số hóa đơn / Invoice_ID linh hoạt từ AppSheet Webhook
   const invoiceIdRaw =
+    data.Invoice_Number ||
+    data.invoice_number ||
     data["Số hóa đơn"] ||
     data.Invoice_ID ||
     data.Order_ID ||
@@ -861,8 +866,11 @@ async function handleAppSheetOrder(data) {
     console.log("[BOT-ORDER] Sending Zalo message to:", uid);
     if (imageGenerated && fs.existsSync(receiptImagePath)) {
       let sentSuccess = false;
+      const orderCaption = cleanInvoiceId
+        ? `🧾 HÓA ĐƠN HOÀN THÀNH - SỐ HĐ: #${cleanInvoiceId}`
+        : `🧾 HÓA ĐƠN HOÀN THÀNH ĐƠN HÀNG`;
       try {
-        await zaloClient.sendMessage({ msg: "", attachments: [receiptImagePath] }, uid);
+        await zaloClient.sendMessage({ msg: orderCaption, attachments: [receiptImagePath] }, uid);
         sentSuccess = true;
         console.log("[BOT-ORDER] ✓ Đã gửi ảnh hóa đơn thiết lập sẵn thành công tới:", uid);
       } catch (sendErr) {
@@ -877,8 +885,12 @@ async function handleAppSheetOrder(data) {
       // Gửi tin nhắn chữ riêng biệt kêu gọi đăng ký thành viên nếu gửi hóa đơn thành công
       if (sentSuccess) {
         try {
+          let rawAmount = parseInt(String(Bill_Amount || "0").replace(/[^0-9]/g, "")) || 0;
+          const formattedAmount = rawAmount.toLocaleString("vi-VN");
           const shortCardUrl = "giatsayquynhon.vn/the";
-          const ctaMessage = `💙 Cảm ơn Quý khách đã sử dụng dịch vụ của chúng tôi!\n\nQuý khách hãy đăng ký thẻ thành viên để tích điểm nhận quà và nhận ngay ưu đãi giặt 7 lần, tặng 1 lần tại:\n👉 ${shortCardUrl}`;
+          const ctaMessage = cleanInvoiceId
+            ? `💙 Cảm ơn Quý khách đã sử dụng dịch vụ của Gold Laundry!\n🧾 Số HĐ: #${cleanInvoiceId}\n💰 Tổng thanh toán: ${formattedAmount}đ\n\nQuý khách hãy đăng ký thẻ thành viên để tích điểm nhận quà và nhận ngay ưu đãi giặt 7 lần, tặng 1 lần tại:\n👉 ${shortCardUrl}`
+            : `💙 Cảm ơn Quý khách đã sử dụng dịch vụ của chúng tôi!\n\nQuý khách hãy đăng ký thẻ thành viên để tích điểm nhận quà và nhận ngay ưu đãi giặt 7 lần, tặng 1 lần tại:\n👉 ${shortCardUrl}`;
           await new Promise((resolve) => setTimeout(resolve, 500));
           console.log("[BOT-ORDER] Sending follow-up VIP card link to:", uid);
           await zaloClient.sendMessage({ msg: ctaMessage }, uid);
