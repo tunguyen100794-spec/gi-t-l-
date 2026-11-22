@@ -866,11 +866,8 @@ async function handleAppSheetOrder(data) {
     console.log("[BOT-ORDER] Sending Zalo message to:", uid);
     if (imageGenerated && fs.existsSync(receiptImagePath)) {
       let sentSuccess = false;
-      const orderCaption = cleanInvoiceId
-        ? `🧾 HÓA ĐƠN HOÀN THÀNH - SỐ HĐ: #${cleanInvoiceId}`
-        : `🧾 HÓA ĐƠN HOÀN THÀNH ĐƠN HÀNG`;
       try {
-        await zaloClient.sendMessage({ msg: orderCaption, attachments: [receiptImagePath] }, uid);
+        await zaloClient.sendMessage({ msg: "", attachments: [receiptImagePath] }, uid);
         sentSuccess = true;
         console.log("[BOT-ORDER] ✓ Đã gửi ảnh hóa đơn thiết lập sẵn thành công tới:", uid);
       } catch (sendErr) {
@@ -885,12 +882,8 @@ async function handleAppSheetOrder(data) {
       // Gửi tin nhắn chữ riêng biệt kêu gọi đăng ký thành viên nếu gửi hóa đơn thành công
       if (sentSuccess) {
         try {
-          let rawAmount = parseInt(String(Bill_Amount || "0").replace(/[^0-9]/g, "")) || 0;
-          const formattedAmount = rawAmount.toLocaleString("vi-VN");
           const shortCardUrl = "giatsayquynhon.vn/the";
-          const ctaMessage = cleanInvoiceId
-            ? `💙 Cảm ơn Quý khách đã sử dụng dịch vụ của Gold Laundry!\n🧾 Số HĐ: #${cleanInvoiceId}\n💰 Tổng thanh toán: ${formattedAmount}đ\n\nQuý khách hãy đăng ký thẻ thành viên để tích điểm nhận quà và nhận ngay ưu đãi giặt 7 lần, tặng 1 lần tại:\n👉 ${shortCardUrl}`
-            : `💙 Cảm ơn Quý khách đã sử dụng dịch vụ của chúng tôi!\n\nQuý khách hãy đăng ký thẻ thành viên để tích điểm nhận quà và nhận ngay ưu đãi giặt 7 lần, tặng 1 lần tại:\n👉 ${shortCardUrl}`;
+          const ctaMessage = `💙 Cảm ơn Quý khách đã sử dụng dịch vụ của Gold Laundry!\n\nQuý khách hãy đăng ký thẻ thành viên để tích điểm nhận quà và nhận ngay ưu đãi giặt 7 lần, tặng 1 lần tại:\n👉 ${shortCardUrl}`;
           await new Promise((resolve) => setTimeout(resolve, 500));
           console.log("[BOT-ORDER] Sending follow-up VIP card link to:", uid);
           await zaloClient.sendMessage({ msg: ctaMessage }, uid);
